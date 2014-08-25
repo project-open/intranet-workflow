@@ -1298,8 +1298,6 @@ ad_proc -public im_workflow_home_inbox_component {
 	    set action_link $next_action_l10n
 	} 
 
-	set action_link "asdf"
-
 	# L10ned version of the relationship of the user to the object
 	set relationship_l10n [lang::message::lookup "" intranet-workflow.$rel $rel]
 
