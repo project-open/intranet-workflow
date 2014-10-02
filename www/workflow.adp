@@ -15,7 +15,7 @@
 	  <tr>
 	    <td bgcolor="#cccccc">
 	      <table width="100%" cellspacing="1" cellpadding="2" border="0">
-		<tr valign="middle" bgcolor="#ccccff">
+		<tr valign="middle">
 		  <th>
 		    @workflow.pretty_name@
 		  </th>
@@ -47,7 +47,7 @@
 	  <tr>
 	    <td bgcolor="#cccccc">
 	      <table border="0" cellspacing="1" cellpadding="2" width="100%">
-		<tr bgcolor="#ccccff">
+		<tr>
 		  <th>
 		    Process
 		  </th>
