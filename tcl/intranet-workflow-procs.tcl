@@ -1366,7 +1366,7 @@ ad_proc -public im_workflow_skip_first_transition {
 } {
     Skip the first tasks of the workflow.
     This is useful for the very first transition of an approval WF
-    There can be potentially more then one of such tasks..
+    There can be potentially more than one of such tasks..
 } {
     set user_id [ad_get_user_id]
 
@@ -1374,13 +1374,17 @@ ad_proc -public im_workflow_skip_first_transition {
     set enabled_tasks [db_list enabled_tasks "
 		select	task_id
 		from	wf_tasks
-		where	case_id = :case_id
-			and state = 'enabled'
+		where	case_id = :case_id and
+			transition_key = 'modify' and
+			state = 'enabled'
     "]
+    ns_log Notice "im_workflow_skip_first_transition: enabled_tasks=$enabled_tasks"
 
     foreach task_id $enabled_tasks {
 	# Assign the first task to the user himself and start the task
-	set wf_case_assig [db_string wf_assig "select workflow_case__add_task_assignment (:task_id, :user_id, 'f')"]
+	# Fraber 151102: Assign to anonymous user in order to suppress email alerts
+	set wf_modify_assignee $user_id
+	set wf_case_assig [db_string wf_assig "select workflow_case__add_task_assignment (:task_id, :wf_modify_assignee, 'f')"]
 
 	# Start the task. Saves the user the work to press the "Start Task" button.
 	set journal_id [db_string wf_action "select workflow_case__begin_task_action (:task_id,'start','[ad_conn peeraddr]',:user_id,'')"]
