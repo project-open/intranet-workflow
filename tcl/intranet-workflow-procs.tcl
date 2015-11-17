@@ -45,7 +45,7 @@ ad_proc -public im_workflow_replace_translations_in_string {
     {-locale ""}
     str 
 } {
-    if {"" == $locale} { set locale [lang::user::locale -user_id [ad_get_user_id]] }
+    if {"" == $locale} { set locale [lang::user::locale -user_id [ad_conn user_id]] }
     return [util_memoize [list im_workflow_replace_translations_in_string_helper -translate_p $translate_p -locale $locale $str]]
 }
 
@@ -222,7 +222,7 @@ ad_proc -public im_workflow_home_component {
 } {
     Creates a HTML table showing all currently active tasks
 } {
-    set user_id [ad_get_user_id]
+    set user_id [ad_conn user_id]
     set admin_p [ad_permission_p [ad_conn package_id] "admin"]
 
     set template_file "packages/acs-workflow/www/task-list"
@@ -347,7 +347,7 @@ ad_proc -public im_workflow_graph_component {
     Show a Graphical WF representation of a workflow associated
     with an object.
 } {
-    set user_id [ad_get_user_id]
+    set user_id [ad_conn user_id]
     set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $user_id]
     set subsite_id [ad_conn subsite_id]
     set reassign_p [permission::permission_p -party_id $user_id -object_id $subsite_id -privilege "wf_reassign_tasks"]
@@ -589,7 +589,7 @@ ad_proc -public im_workflow_action_component {
 	- Canceled
 	- Finished
 } {
-    set current_user_id [ad_get_user_id]
+    set current_user_id [ad_conn user_id]
     set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $current_user_id]
     set return_url [im_url_with_query]
 
@@ -953,7 +953,7 @@ ad_proc -public im_workflow_new_journal {
 } {
     Creates a new journal entry that can be passed to PL/SQL routines
 } {
-    set user_id [ad_get_user_id]
+    set user_id [ad_conn user_id]
     set peer_ip [ad_conn peeraddr]
 
     set jid [db_string new_journal "
@@ -978,7 +978,7 @@ ad_proc -public im_workflow_replacing_vacation_users {
 } {
     Returns the list of users that the current_user_id is replacing.
 } {
-    set current_user_id [ad_get_user_id]
+    set current_user_id [ad_conn user_id]
 
     # Vacation Absence Logic:
     # Check if the current user is the vacation replacement for some other user
@@ -1019,7 +1019,7 @@ ad_proc -public im_workflow_task_action {
     is the holding user. This allows for reassigning tasks even if the task
     was started.
 } {
-    set user_id [ad_get_user_id]
+    set user_id [ad_conn user_id]
     set peer_ip [ad_conn peeraddr]
     set case_id [db_string case "select case_id from wf_tasks where task_id = :task_id" -default 0]
     set action_pretty [lang::message::lookup "" intranet-workflow.Action_$action $action]
@@ -1082,7 +1082,7 @@ ad_proc -public im_workflow_home_inbox_component {
     set bgcolor(1) " class=rowodd "
 
     set sql_date_format "YYYY-MM-DD"
-    set current_user_id [ad_get_user_id]
+    set current_user_id [ad_conn user_id]
     set return_url [im_url_with_query]
     set view_id [db_string get_view_id "select view_id from im_views where view_name=:view_name"]
     set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $current_user_id]
@@ -1368,7 +1368,7 @@ ad_proc -public im_workflow_skip_first_transition {
     This is useful for the very first transition of an approval WF
     There can be potentially more than one of such tasks..
 } {
-    set user_id [ad_get_user_id]
+    set user_id [ad_conn user_id]
 
     # Get the first "enabled" task of the new case_id:
     set enabled_tasks [db_list enabled_tasks "
@@ -1425,7 +1425,7 @@ ad_proc im_workflow_object_permissions {
 
     # ------------------------------------------------------
     # Pull out the relevant variables
-    set user_id [ad_get_user_id]
+    set user_id [ad_conn user_id]
     set owner_id [db_string owner "select creation_user from acs_objects where object_id = $object_id" -default 0]
     if {"" == $owner_id} { set owner_id 0 }
     set status_id [db_string status "select im_biz_object__get_status_id (:object_id)" -default 0]
