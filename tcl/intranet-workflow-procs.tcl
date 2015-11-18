@@ -616,7 +616,6 @@ ad_proc -public im_workflow_action_component {
 
 	# Clean the array for the next task
 	array unset task
-
 	set export_form_vars [export_vars -form {task_id return_url}]
 
 	# ---------------------------------------------------------
@@ -1346,7 +1345,7 @@ ad_proc -public im_workflow_home_inbox_component {
     set return_url [ad_conn url]?[ad_conn query]
     return "
 	<form action=\"/intranet-workflow/inbox-action\" method=POST>
-	[export_form_vars return_url]
+	[export_vars -form {return_url}]
 	<table class=\"table_list_page\">
 	  $table_header_html
 	  $table_body_html
