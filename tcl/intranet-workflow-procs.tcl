@@ -633,7 +633,7 @@ ad_proc -public im_workflow_action_component {
 	    return
 	}
 
-	set task(add_assignee_url) "/[im_workflow_url]/assignee-add?[export_url_vars task_id]"
+	set task(add_assignee_url) "/[im_workflow_url]/assignee-add?[export_vars -url {task_id}]"
 	set task(assign_yourself_url) "/[im_workflow_url]/assign-yourself?[export_vars -url {task_id return_url}]"
 	set task(manage_assignments_url) "/[im_workflow_url]/task-assignees?[export_vars -url {task_id return_url}]"
 	set task(cancel_url) "/[im_workflow_url]/task?[export_vars -url {task_id return_url {action.cancel Cancel}}]"
