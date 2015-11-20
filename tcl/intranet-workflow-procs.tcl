@@ -616,7 +616,7 @@ ad_proc -public im_workflow_action_component {
 
 	# Clean the array for the next task
 	array unset task
-	set export_form_vars [export_vars -form {task_id return_url}]
+	set export_vars [export_vars -form {task_id return_url}]
 
 	# ---------------------------------------------------------
 	# Get everything about the task
@@ -690,7 +690,7 @@ ad_proc -public im_workflow_action_component {
 	    # Table header common to all states
 	    append result "
 				<form action='/[im_workflow_url]/task' method='post'>
-				$export_form_vars
+				$export_vars
 				<table>
 		        	<tr $bgcolor([expr $ctr%2])>
 		        	    <td>Task Name</td>
