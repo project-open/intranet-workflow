@@ -1,5 +1,5 @@
 <master>
-<property name="title">@page_title@</property>
+<property name="doc(title)">@page_title;literal@</property>
 <property name="main_navbar_label">rfc</property>
 
 <if @button_cancel@ ne "">
@@ -15,5 +15,5 @@
 <p>&nbsp;</p>
 
 <ul>
-<li><a href="@return_url;noquote@"><%= [lang::message::lookup "" intranet-workflow.Back_to_last_page "Back to last page"] %></a>.
+<li><a href="@return_url@"><%= [lang::message::lookup "" intranet-workflow.Back_to_last_page "Back to last page"] %></a>.
 </ul>

@@ -27,7 +27,7 @@ ad_page_contract {
     }
 }
 
-set return_url "[ns_conn url]?[export_vars -url {workflow_key tab}]"
+set return_url "[ns_conn url]?[export_vars {workflow_key tab}]"
 
 db_1row workflow {
     select w.workflow_key, 
@@ -72,18 +72,18 @@ set context [list "$workflow(pretty_name)"]
 
 if { $workflow(num_cases) > 0 } { 
     #set edit_process_url ""
-    set edit_process_url "define?[export_vars -url {workflow_key}]"
+    set edit_process_url [export_vars -base define {workflow_key}]
     set edit_attributes_url ""
-    set edit_roles_url "workflow-roles?[export_vars -url {workflow_key}]"
-    set copy_process_url "workflow-copy?[export_vars -url {workflow_key}]"
+    set edit_roles_url [export_vars -base workflow-roles {workflow_key}]
+    set copy_process_url [export_vars -base workflow-copy {workflow_key}]
 } else {
-    set edit_process_url "define?[export_vars -url {workflow_key}]"
-    set edit_attributes_url "attributes?[export_vars -url {workflow_key}]"
-    set edit_roles_url "workflow-roles?[export_vars -url {workflow_key}]"
-    set copy_process_url "workflow-copy?[export_vars -url {workflow_key}]"
+    set edit_process_url [export_vars -base define {workflow_key}]
+    set edit_attributes_url [export_vars -base attributes {workflow_key}]
+    set edit_roles_url [export_vars -base workflow-roles {workflow_key}]
+    set copy_process_url [export_vars -base workflow-copy {workflow_key}]
 }
 
-set export_process_url "export?[export_vars -url {workflow_key}]"
+set export_process_url [export_vars -base export {workflow_key}]
 
 
 ad_return_template

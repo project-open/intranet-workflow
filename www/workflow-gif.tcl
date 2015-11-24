@@ -8,7 +8,7 @@ ad_page_contract {
     tmpfile:notnull
 } -validate {
     tmpfile_valid -requires { tmpfile:notnull } {
-	if { ![string equal $tmpfile [ad_get_client_property wf wf_net_tmpfile]] } {
+	if { $tmpfile ne [ad_get_client_property wf wf_net_tmpfile] } {
 	    ad_complain "Bad tmpfile argument"
 	}
     }

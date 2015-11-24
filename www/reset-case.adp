@@ -1,5 +1,5 @@
 <master>
-<property name="title">@page_title@</property>
+<property name="doc(title)">@page_title;literal@</property>
 <property name="main_navbar_label">rfc</property>
 
 <h1><%= [lang::message::lookup "" intranet-workflow.Confirm_reset_action "Confirm %action_pretty%"] %></h1>
@@ -9,6 +9,6 @@
 
 <form action=reset-case-2 method=POST>
 <%= [export_vars -form {return_url project_id task_id place_key action_pretty}] %>
-<input type=submit name=button_cancel value="<%= [lang::message::lookup "" intranet-workflow.Cancel_Button "Cancel"] %>">
-<input type=submit name=button_confirm value="<%= [lang::message::lookup "" intranet-workflow.Confirm_Button "Confirm %action_pretty%"] %>">
+<input type="submit" name="button_cancel" value="<%= [lang::message::lookup "" intranet-workflow.Cancel_Button "Cancel"] %>">
+<input type="submit" name="button_confirm" value="<%= [lang::message::lookup "" intranet-workflow.Confirm_Button "Confirm %action_pretty%"] %>">
 </form>

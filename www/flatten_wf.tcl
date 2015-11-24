@@ -63,9 +63,9 @@ while {$cnt < 20 && [llength $active_nodes] > 0} {
 #	    append html "<li>active=$active_node, from=$from, to=$to\n"
 
 	    # Check if we find and outgoing edge from node
-	    if {[string equal $from $active_node]} {
+	    if {$from eq $active_node} {
 
-		set dist1 [expr $distance($from) + 1]
+		set dist1 [expr {$distance($from) + 1}]
 #		append html "<li>match: dist1=$dist1\n"
 
 		if {$dist1 < $distance($to)} {

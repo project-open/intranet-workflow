@@ -8,7 +8,7 @@ ad_page_contract {
     return_url
 }
 
-set user_id [ad_maybe_redirect_for_registration]
+set user_id [auth::require_login]
 set reassign_perms_p [im_permission $user_id "wf_reassign_tasks"]
 set user_name [db_string uname "select im_name_from_user_id(:user_id)"]
 

@@ -190,7 +190,7 @@ ad_proc -public im_workflow_status_select {
 	set value [lindex $option 0]
 	set key [lindex $option 1]
 	set selected ""
-	if {[string equal $default $key]} { set selected "selected" }
+	if {$default eq $key} { set selected "selected" }
         append result "<option value=\"$key\" $selected>$value</option>\n"
     }
     append result "</select>\n"
@@ -223,7 +223,7 @@ ad_proc -public im_workflow_home_component {
     Creates a HTML table showing all currently active tasks
 } {
     set user_id [ad_conn user_id]
-    set admin_p [ad_permission_p [ad_conn package_id] "admin"]
+    set admin_p [permission::permission_p -object_id [ad_conn package_id] -privilege "admin"]
 
     set template_file "packages/acs-workflow/www/task-list"
     set template_path [get_server_root]/$template_file
@@ -310,8 +310,8 @@ ad_proc -public im_workflow_graph_sort_order {
 	    set from [lindex $edge 0]
 	    set to [lindex $edge 1]
 	    # Check if we find and outgoing edge from node
-	    if {[string equal $from $active_node]} {
-		set dist1 [expr $distance($from) + 1]
+	    if {$from eq $active_node} {
+		set dist1 [expr {$distance($from) + 1}]
 		if {$dist1 < $distance($to)} {
 		    set distance($to) $dist1
 		    ns_log Notice "im_workflow_graph_sort_order: distance($to) = $dist1"
@@ -407,7 +407,7 @@ ad_proc -public im_workflow_graph_component {
     set cnt 0
     db_foreach history $history_sql {
 	append history_html "
-	    <tr $bgcolor([expr $cnt % 2])>
+	    <tr $bgcolor([expr {$cnt % 2}])>
 		<td>$transition_name</td>
 		<td><nobr><a href=/intranet/users/view?user_id=$holding_user>$holding_user_name</a></nobr></td>
 		<td><nobr>$started_date_pretty</nobr></td>
@@ -457,19 +457,19 @@ ad_proc -public im_workflow_graph_component {
 	append transition_html "<tr class=rowtitle><td colspan=2 class=rowtitle align=center>
 		[lang::message::lookup "" intranet-workflow.Next_step_details "Next Step: Details"]
 	</td></tr>\n"
-	append transition_html "<tr $bgcolor([expr $cnt % 2])><td>
+	append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
 		[lang::message::lookup "" intranet-workflow.Task_name "Task Name"]
 	</td><td>$transition_name</td></tr>\n"
         incr cnt
-	append transition_html "<tr $bgcolor([expr $cnt % 2])><td>
+	append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
 		[lang::message::lookup "" intranet-workflow.Holding_user "Holding User"]
 	</td><td>$holding_user_name</td></tr>\n"
         incr cnt
-	append transition_html "<tr $bgcolor([expr $cnt % 2])><td>
+	append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
 		[lang::message::lookup "" intranet-workflow.Task_state "Task State"]
 	</td><td>$state</td></tr>\n"
         incr cnt
-	append transition_html "<tr $bgcolor([expr $cnt % 2])><td>
+	append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
 		[lang::message::lookup "" intranet-workflow.Automatic_trigger "Automatic Trigger"]
 	</td><td>$trigger_time_pretty</td></tr>\n"
         incr cnt
@@ -518,7 +518,7 @@ ad_proc -public im_workflow_graph_component {
 	set party_link "<a href=/intranet/users/view?user_id=$party_id>$party_name</a>"
 	if {"user" != $party_type} { set party_link $party_name	}
 	append assignee_html "
-	    <tr $bgcolor([expr $cnt % 2])>
+	    <tr $bgcolor([expr {$cnt % 2}])>
 		<td>$transition_name</td>
 		<td><nobr>$party_link</nobr></td>
 	    </tr>
@@ -527,7 +527,7 @@ ad_proc -public im_workflow_graph_component {
     }
     if {0 == $cnt} {
 	append assignee_html "
-	    <tr $bgcolor([expr $cnt % 2])>
+	    <tr $bgcolor([expr {$cnt % 2}])>
 		<td colspan=2><i>&nbsp;Nobody assigned</i></td>
 	    </tr>
         "
@@ -633,10 +633,10 @@ ad_proc -public im_workflow_action_component {
 	    return
 	}
 
-	set task(add_assignee_url) "/[im_workflow_url]/assignee-add?[export_vars -url {task_id}]"
-	set task(assign_yourself_url) "/[im_workflow_url]/assign-yourself?[export_vars -url {task_id return_url}]"
-	set task(manage_assignments_url) "/[im_workflow_url]/task-assignees?[export_vars -url {task_id return_url}]"
-	set task(cancel_url) "/[im_workflow_url]/task?[export_vars -url {task_id return_url {action.cancel Cancel}}]"
+	set task(add_assignee_url) "/[im_workflow_url]/[export_vars -base assignee-add {task_id}]"
+	set task(assign_yourself_url) "/[im_workflow_url]/[export_vars -base assign-yourself {task_id return_url}]"
+	set task(manage_assignments_url) "/[im_workflow_url]/[export_vars -base task-assignees {task_id return_url}]"
+	set task(cancel_url) "/[im_workflow_url]/[export_vars -base task {task_id return_url {action.cancel Cancel}}]"
 	set task(action_url) "/[im_workflow_url]/task"
 	set task(return_url) $return_url
 
@@ -692,7 +692,7 @@ ad_proc -public im_workflow_action_component {
 				<form action='/[im_workflow_url]/task' method='post'>
 				$export_vars
 				<table>
-		        	<tr $bgcolor([expr $ctr%2])>
+		        	<tr $bgcolor([expr {$ctr%2}])>
 		        	    <td>Task Name</td>
 		        	    <td>$task(task_name)</td>
 		        	</tr>
@@ -701,7 +701,7 @@ ad_proc -public im_workflow_action_component {
 
 	    if {"" != [string trim $task(instructions)]} {
 		append result "
-		        	<tr $bgcolor([expr $ctr%2])>
+		        	<tr $bgcolor([expr {$ctr%2}])>
 		        	    <td>Task Description</td>
 		        	    <td>$task(instructions)</td>
 		        	</tr>
@@ -732,7 +732,7 @@ ad_proc -public im_workflow_action_component {
 			"
 		    } else {
 			append result "
-				<tr $bgcolor([expr $ctr%2])>
+				<tr $bgcolor([expr {$ctr%2}])>
 					<td>Action</td>
 					<td>
 					    This task has been assigned to somebody else.<br>
@@ -832,7 +832,7 @@ append result "This task was completed by <a href='/shared/community-member?user
 	    if {"" != $task(hold_timeout_pretty)} {
 		set timeout_html "<td>Timeout</td><td>$task(hold_timeout_pretty)</td>\n"
 		append result "
-				<tr $bgcolor([expr $ctr%2])>
+				<tr $bgcolor([expr {$ctr%2}])>
 					$timeout_html
 				</tr>
 		"
@@ -848,7 +848,7 @@ append result "This task was completed by <a href='/shared/community-member?user
 		    set deadline_html "<td>Deadline</td><td>Deadline is $task(deadline_pretty)</td>\n"
 		}
 		append result "
-				<tr $bgcolor([expr $ctr%2])>
+				<tr $bgcolor([expr {$ctr%2}])>
 					$deadline_html
 				</tr>
 		"
@@ -866,7 +866,7 @@ append result "This task was completed by <a href='/shared/community-member?user
 	    }
 	    if {[llength $assigned_users] > 0} {
 		append result "
-				<tr $bgcolor([expr $ctr%2])>
+				<tr $bgcolor([expr {$ctr%2}])>
 					<td>Assigned Users</td>
 					<td>[join $assigned_users "<br>\n"]</td>
 				</tr>
@@ -885,7 +885,7 @@ append result "This task was completed by <a href='/shared/community-member?user
 
 	    if {[llength $task_actions] > 0} {
 		append result "
-				<tr $bgcolor([expr $ctr%2])>
+				<tr $bgcolor([expr {$ctr%2}])>
 					<td>Extreme Actions</td>
 					<td>[join $task_actions "&nbsp; \n"]</td>
 				</tr>
@@ -1124,7 +1124,7 @@ ad_proc -public im_workflow_home_inbox_component {
 	set value [ns_set get $form_vars $key]
 	append current_url "$key=[ns_urlencode $value]"
 	ns_log Notice "im_workflow_home_inbox_component: i=$i, key=$key, value=$value"
-	if { $i < [expr $form_vars_size-1] } { append url_vars "&" }
+	if { $i < [expr {$form_vars_size-1}] } { append url_vars "&" }
     }
 
     if {"" == $order_by_clause} {
@@ -1270,7 +1270,7 @@ ad_proc -public im_workflow_home_inbox_component {
 	set rel "none"
 	if {[lsearch $replacement_ids $owner_id] > -1} { set rel "my_object" }
 	foreach assigned_user_id $assigned_users {
-	    if {[lsearch $replacement_ids $assigned_user_id] > -1 && $rel != "holding_user"} { 
+	    if {[lsearch $replacement_ids $assigned_user_id] > -1 && $rel ne "holding_user"} { 
 		set rel "assignment_group" 
 	    }
 	    if {[lsearch $replacement_ids $holding_user] > -1} { 
@@ -1300,7 +1300,7 @@ ad_proc -public im_workflow_home_inbox_component {
 	# L10ned version of the relationship of the user to the object
 	set relationship_l10n [lang::message::lookup "" intranet-workflow.$rel $rel]
 
-	set row_html "<tr$bgcolor([expr $ctr % 2])>\n"
+	set row_html "<tr$bgcolor([expr {$ctr % 2}])>\n"
 	foreach column_var $column_vars {
 	    append row_html "\t<td valign=top>"
 	    set cmd "append row_html $column_var"
@@ -1313,7 +1313,7 @@ ad_proc -public im_workflow_home_inbox_component {
     }
 
     # Show a reasonable message when there are no result rows:
-    if { [empty_string_p $table_body_html] } {
+    if { $table_body_html eq "" } {
 	set table_body_html "
 	<tr><td colspan=$colspan><ul><li><b> 
 	[lang::message::lookup "" intranet-core.lt_There_are_currently_n "There are currently no entries matching the selected criteria"]
@@ -1432,7 +1432,7 @@ ad_proc im_workflow_object_permissions {
     set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $user_id]
     set user_is_hr_p [im_user_is_hr_p $user_id]
     set user_is_accounting_p [im_user_is_accounting_p $user_id]
-    set user_is_owner_p [expr $owner_id == $user_id]
+    set user_is_owner_p [expr {$owner_id == $user_id}]
     set user_is_assignee_p [db_string assignee_p "
 	select	count(*)
 	from	(select	pamm.member_id

@@ -38,14 +38,14 @@ if { [wf_graphviz_installed_p] } {
 
     set width_and_height ""
     if { ![catch { set image_size [ns_gifsize $tmpfile] } error] } {
-	if { ![empty_string_p $image_size] } {
+	if { $image_size ne "" } {
 	    set width_and_height "width=[lindex $image_size 0] height=[lindex $image_size 1]"
 	}
     }
     
     ad_set_client_property wf wf_net_tmpfile $tmpfile
     
-    set workflow_img_tag "<img src=\"/intranet-workflow/workflow-gif?[export_vars -url { tmpfile}]\" border=0 $width_and_height alt=\"Graphical representation of the process network\">"
+    set workflow_img_tag "<img src=\"/intranet-workflow/[export_vars -base workflow-gif { tmpfile}]\" border=0 $width_and_height alt=\"Graphical representation of the process network\">"
 } else {
     set workflow_img_tag ""
 }

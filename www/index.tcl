@@ -8,7 +8,7 @@ ad_page_contract {
 
 }
 
-set user_id [ad_maybe_redirect_for_registration]
+set user_id [auth::require_login]
 set page_title [lang::message::lookup "" intranet-workflow.Workflow_Home "Workflow Home"]
 set workflow_home_inbox [im_workflow_home_inbox_component -relationship "assignment_group"]
 set workflow_home_component [im_workflow_home_component]
@@ -47,7 +47,7 @@ foreach type [db_list wf_notifs "select short_name from notification_types where
                             -object_id $notification_object_id \
                             -user_id $user_id]
 
-    set subscribed_p [expr ![empty_string_p $request_id]]
+    set subscribed_p [expr {$request_id ne ""}] 
 
     if { $subscribed_p } {
 	set url [notification::display::unsubscribe_url -request_id $request_id -url $return_url]
@@ -61,7 +61,7 @@ foreach type [db_list wf_notifs "select short_name from notification_types where
 	set url $notification_subscribe_url
     }
 
-    if { ![empty_string_p $url] } {
+    if { $url ne "" } {
 	multirow append notifications \
 	    $url \
 	    [string totitle $pretty_name] \

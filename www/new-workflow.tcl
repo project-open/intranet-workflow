@@ -28,7 +28,7 @@ ad_page_contract {
 # arbitrary object? We may argue yes, because security is dealt
 # with on a per-workflow base.
 
-set user_id [ad_maybe_redirect_for_registration]
+set user_id [auth::require_login]
 set page_title "[lang::message::lookup "" intranet-workflow.New_Workflow "New Workflow"]"
 set context_bar [im_context_bar $page_title]
 set page_focus "im_header_form.keywords"

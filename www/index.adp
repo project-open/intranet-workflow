@@ -1,13 +1,13 @@
 <master src="../../intranet-core/www/master">
-<property name="title">@page_title@</property>
+<property name="doc(title)">@page_title;literal@</property>
 <property name="main_navbar_label">workflow</property>
-<property name="left_navbar">@left_navbar_html;noquote@</property>
+<property name="left_navbar">@left_navbar_html;literal@</property>
 
 <!-- left - right - bottom  design -->
 
-<table cellpadding=0 cellspacing=0 border=0 width="100%">
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr>
-  <td colspan=3>
+  <td colspan="3">
     <%= [im_component_bay top] %>
   </td>
 </tr>
@@ -57,9 +57,9 @@
 
 
 <if @admin_html@ ne "">
-        <table border=0 cellpadding=1 cellspacing=2>
+        <table border="0" cellpadding="1" cellspacing="2">
 	    <tr>
-	      <td class=rowtitle align=center>
+	      <td class=rowtitle align="center">
 		#intranet-workflow.Admin_workflows#
 	      </td>
 	    </tr>
@@ -78,7 +78,7 @@
   </td>
 </tr>
 <tr>
-  <td colspan=3>
+  <td colspan="3">
 
     @workflow_home_inbox;noquote@
 <!--	@workflow_home_component;noquote@ -->
