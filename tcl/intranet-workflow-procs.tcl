@@ -477,8 +477,10 @@ ad_proc -public im_workflow_graph_component {
 	if {$reassign_p} {
 	    append transition_html "
 		<tr class=rowplain><td colspan=2>
-		<li><a href=[export_vars -base "/[im_workflow_url]/assign-yourself" {task_id return_url}]>[lang::message::lookup "" intranet-workflow.Assign_yourself "Assign yourself"]</a>
-		<li><a href=[export_vars -base "/[im_workflow_url]/task-assignees" {task_id return_url}]>[lang::message::lookup "" intranet-workflow.Assign_somebody_else "Assign somebody else"]</a>
+		<ul>
+			<li><a href=[export_vars -base "/[im_workflow_url]/assign-yourself" {task_id return_url}]>[lang::message::lookup "" intranet-workflow.Assign_yourself "Assign yourself"]</a>
+			<li><a href=[export_vars -base "/[im_workflow_url]/task-assignees" {task_id return_url}]>[lang::message::lookup "" intranet-workflow.Assign_somebody_else "Assign somebody else"]</a>
+		</ul>
 		</td></tr>
             "
 	}
@@ -549,8 +551,10 @@ ad_proc -public im_workflow_graph_component {
     if {$reassign_p} {
         append assignee_html "
 		<tr class=rowplain><td colspan=2>
-		<li><a href='[export_vars -base "/[im_workflow_url]/case?" {case_id}]'>[_ intranet-workflow.Debug_Case]</a>
-		<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url project_id {place_key "start"} {action_pretty "restart"}}]'>[_ intranet-workflow.Reset_Case]</a>
+		<ul>
+			<li><a href='[export_vars -base "/[im_workflow_url]/case?" {case_id}]'>[_ intranet-workflow.Debug_Case]</a>
+			<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url project_id {place_key "start"} {action_pretty "restart"}}]'>[_ intranet-workflow.Reset_Case]</a>
+		</ul>
 		</td></tr>
         "
     }
