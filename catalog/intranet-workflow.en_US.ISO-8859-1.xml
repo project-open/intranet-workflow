@@ -43,6 +43,7 @@
   <msg key="What">What?</msg>
   <msg key="When">When?</msg>
   <msg key="Who">Who?</msg>
+  <msg key="Workflow">Workflow</msg>
   <msg key="Workflow_Home">Workflow Home</msg>
   <msg key="Your_Tasks">My RFCs</msg>
 </message_catalog>
