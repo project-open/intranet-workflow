@@ -13,6 +13,7 @@ set page_title [lang::message::lookup "" intranet-workflow.Workflow_Home "Workfl
 set workflow_home_inbox [im_workflow_home_inbox_component -relationship "assignment_group"]
 set workflow_home_component [im_workflow_home_component]
 set return_url [im_url_with_query]
+set left_menu_p [parameter::get_from_package_key -package_key "intranet-core" -parameter ShowLeftFunctionalMenupP -default 0]
 
 set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $user_id]
 set admin_html ""
@@ -86,5 +87,6 @@ set left_navbar_html "
 		$admin_link
             </ul>
         </div>
-        <hr/>
 "
+if {$left_menu_p} { append left_navbar_html "<hr/>" }
+
