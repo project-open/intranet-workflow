@@ -1208,6 +1208,7 @@ ad_proc -public im_workflow_home_inbox_component {
 		im_biz_object__get_type_id(o.object_id) as type_id,
 		im_biz_object__get_status_id(o.object_id) as status_id,
 		tr.transition_name,
+		tr.transition_key,
 		t.holding_user,
 		t.task_id,
 		im_workflow_task_assignee_names(t.task_id) as assignees_pretty
@@ -1293,6 +1294,7 @@ ad_proc -public im_workflow_home_inbox_component {
 	set object_url "[im_biz_object_url $object_id "view"]&return_url=[ns_urlencode $return_url]"
 	set owner_url [export_vars -base "/intranet/users/view" {return_url {user_id $owner_id}}]
 	
+	set action_hash($transition_key) $next_action_l10n
 	set action_url [export_vars -base "/[im_workflow_url]/task" {return_url task_id}]
 	set action_link "<a href=$action_url>$next_action_l10n</a>"
 
@@ -1329,7 +1331,12 @@ ad_proc -public im_workflow_home_inbox_component {
     
     set admin_action_options ""
     if {$user_is_admin_p} {
-	set admin_action_options "<option value=\"nuke\">[lang::message::lookup "" intranet-workflow.Nuke_Object "Nuke Object (Admin only)"]</option>"
+	set admin_action_options "<option value=\"nuke\">[lang::message::lookup "" intranet-workflow.Nuke_Object "Nuke Object (Admin only)"]</option>\n"
+    }
+
+    foreach wf_trans [lsort [array names action_hash]] {
+	set wf_trans_l10n $action_hash($wf_trans)
+	append admin_action_options "<option value=\"$wf_trans\">$wf_trans_l10n</option>\n"
     }
 
     set table_action_html "
