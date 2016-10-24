@@ -28,7 +28,8 @@ foreach tid $task_id {
 			o.object_type,
 			tr.workflow_key,
 			tr.transition_key,
-			tr.transition_name
+			tr.transition_name,
+			acs_object__name(wfc.object_id) as object_name
 		from	wf_tasks wft,
 			wf_cases wfc,
 			wf_transitions tr,
@@ -76,7 +77,11 @@ foreach tid $task_id {
 	default {
             if {$operation ne $transition_key} {
 		# Check that the user didn't apply the wrong operation on a task.
-		ad_return_complaint 1 "You can't perform '$operation' on a transition that needs '$transition_key' on task #$tid"
+		ad_return_complaint 1 "<b>Invalid Operation</b>:<br>&nbsp;<br>
+			You are trying to perform bulk action '$operation' <br>
+			on a '$transition_key' workflow task. This is not possible.<br>&nbsp;<br>
+			Please go back to the previous page and only select <br>
+			workflow tasks of type '$transition_key'."
 		ad_script_abort
 	    }
 
@@ -94,7 +99,15 @@ foreach tid $task_id {
 		from	acs_attributes
 		where	object_type = :workflow_key   
 	    "]
-	    if {[llength $attributes] > 1} { ad_return_complaint 1 "Found more than one attribute ($attributes) in workflow $workflow_key" }
+	    if {[llength $attributes] > 1} { 
+		ad_return_complaint 1 "<b>Unsuitable Workflow</b>:<br>&nbsp;<br>
+                      The workflow '$workflow_key' of task '$object_name'<br>
+		      is not suitable for workflow bulk actions ('$operation'),<br>
+		      because it contains more than one attribute:<br>&nbsp;<br>
+		      [join $attributes ", "]<br>&nbsp;<br>
+ 		      Please perform this workflow task manually."
+		      ad_script_abort
+	    }
 	    set attribute_name [lindex $attributes 0]
 	    set attribute_hash($attribute_name) "t"
 
