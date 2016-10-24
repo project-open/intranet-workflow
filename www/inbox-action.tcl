@@ -76,7 +76,7 @@ foreach tid $task_id {
 	default {
             if {$operation ne $transition_key} {
 		# Check that the user didn't apply the wrong operation on a task.
-		ad_return_complaint 1 "You can't perform '$operation' on a transition that needs '$transition_key' on task #$task_id"
+		ad_return_complaint 1 "You can't perform '$operation' on a transition that needs '$transition_key' on task #$tid"
 		ad_script_abort
 	    }
 
@@ -102,7 +102,7 @@ foreach tid $task_id {
 	    set current_user_assigned_p [db_string task_assigned_users "
 		select	count(*)
 		from	wf_user_tasks ut
-		where	ut.task_id = :task_id and
+		where	ut.task_id = :tid and
 			ut.user_id = :current_user_id
 	    "]
 	    if {!$current_user_assigned_p} {
@@ -110,7 +110,7 @@ foreach tid $task_id {
 		    ad_return_complaint 1 "<li>[_ intranet-core.lt_You_have_insufficient_1]"
 		    return
 		} else {
-		    wf_case_add_task_assignment -task_id $task_id -party_id $current_user_id
+		    wf_case_add_task_assignment -task_id $tid -party_id $current_user_id
 		}
 	    }
 
@@ -119,7 +119,7 @@ foreach tid $task_id {
 				-msg $msg \
 				-attributes [array get attribute_hash] \
 				-assignments [array get assignments] \
-				$task_id \
+				$tid \
 				$action \
 	    ]
 
