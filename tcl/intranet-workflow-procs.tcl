@@ -1343,8 +1343,8 @@ ad_proc -public im_workflow_home_inbox_component {
 	<tr class=rowplain>
 	<td colspan=99 class=rowplain align=left>
 	    <select name=\"operation\">
-	    <option value=\"delete_membership\">[lang::message::lookup "" intranet-workflow.Remove_From_Inbox "Remove from Inbox"]</option>
 	    $admin_action_options
+	    <option value=\"delete_membership\">[lang::message::lookup "" intranet-workflow.Remove_From_Inbox "Remove from Inbox"]</option>
 	    </select>
 	    <input type=submit name=submit value='[lang::message::lookup "" intranet-workflow.Submit "Submit"]'>
 	</td>
