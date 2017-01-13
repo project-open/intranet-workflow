@@ -87,6 +87,51 @@ set left_navbar_html "
 		$admin_link
             </ul>
         </div>
+        <hr/>
 "
+
+set notifications_html "
+                <br>
+		<table cellspacing=\"5\" cellpadding=\"5\">
+		  <tr class=\"rowtitle\">
+		    <th colspan=\"2\">Notifications</th>
+		    <th>Subscribe</th>
+		  </tr>
+"
+set rownum 0
+template::multirow foreach notifications {
+    if {[expr $rownum % 2]} {
+	set class "bt_listing_odd"
+    } else {
+	set class "bt_listing_even"
+    }
+
+    if {$subscribed_p} { 
+	set sub_l10n "Unsubscribe"
+    } else {
+	set sub_l10n "Subscribe"
+    }
+    set raquo "&raquo;"
+    if {!$subscribed_p} { set raquo "&nbsp;" }
+    append notification_html "
+                    <tr class=\"$class\">
+		      <td align=\"center\" class=\"bt_listing_narrow\">$raquo</td>
+		      <td class=\"bt_listing\">$label</td>
+		      <td class=\"bt_listing\"><a href=\"$url\" title=\"$title\">$sub_l10n</a></td>
+		    </tr>
+    "
+    incr rownum
+}
+append notification_html "</table>\n"
+
+
+
+append left_navbar_html "
+        <div class='filter-block'>
+            <div class='filter-title'>[lang::message::lookup "" acs-workflow.Notifications "Notifications"]</div>
+	    $notification_html
+        </div>
+"
+
 if {$left_menu_p} { append left_navbar_html "<hr/>" }
 
