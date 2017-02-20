@@ -1163,28 +1163,26 @@ ad_proc -public im_workflow_home_inbox_component {
 	where	view_id = :view_id
 	order by sort_order, column_id
     "
-
     set column_vars [list]
     set colspan 1
     set table_header_html "<tr class=\"list-header\">\n"
-
     db_foreach column_list_sql $column_sql {
 	if {"" == $visible_for || [eval $visible_for]} {
 	    lappend column_vars "$column_render_tcl"
-	    regsub -all " " $column_name "_" col_txt
 
 	    # Only localize reasonable columns
-	    if {[regexp {^[a-zA-Z0-9_]+$} $col_txt]} {
-		set col_txt [lang::message::lookup "" intranet-workflow.$col_txt $column_name]
+	    if {[regexp {^[a-zA-Z0-9_]+$} $column_name]} {
+		regsub -all " " $column_name "_" col_key
+		set column_name [lang::message::lookup "" intranet-workflow.$col_key $column_name]
 	    }
 
 	    set col_url [export_vars -base $current_url {{wf_inbox_order_by $column_name}}]
 	    set admin_link "<a href=[export_vars -base "/intranet/admin/views/new-column" {return_url column_id {form_mode edit}}] target=\"_blank\">[im_gif wrench]</a>"
 	    if {!$user_is_admin_p} { set admin_link "" }
 	    if {"f" == $order_by_clause_exists_p} {
-		append table_header_html "<th class=\"list\">$col_txt$admin_link</td>\n"
+		append table_header_html "<th class=\"list\">$column_name$admin_link</td>\n"
 	    } else {
-		append table_header_html "<th class=\"list\"><a href=\"$col_url\">$col_txt</a>$admin_link</td>\n"
+		append table_header_html "<th class=\"list\"><a href=\"$col_url\">$column_name</a>$admin_link</td>\n"
 	    }
 	    incr colspan
 	}
