@@ -20,6 +20,7 @@
   <msg key="Debug_Case">Workflow debuggen</msg>
   <msg key="Execute">Ausführen</msg>
   <msg key="Holding_user">Haltender Benutzer</msg>
+  <msg key="holding_user">Haltender Benutzer</msg>
   <msg key="Modify">Anpassen</msg>
   <msg key="my_object">Mein Objekt</msg>
   <msg key="Next_step_details">Details zu nächsten Schritten</msg>
