@@ -107,16 +107,21 @@ template::multirow foreach notifications {
     }
 
     if {$subscribed_p} { 
-	set sub_l10n "Unsubscribe"
+	set sub_l10n [lang::message::lookup "" intranet-workflow.Unsubscribe "Unsubscribe"]
     } else {
-	set sub_l10n "Subscribe"
+	set sub_l10n [lang::message::lookup "" intranet-workflow.Subscribe "Subscribe"]
     }
     set raquo "&raquo;"
     if {!$subscribed_p} { set raquo "&nbsp;" }
+
+    set label_key "Label_$label"
+    regsub -all {[^a-zA-Z0-9]} $label_key "_" label_key
+    set label_l10n [lang::message::lookup "" intranet-workflow.$label_key $label]
+
     append notification_html "
                     <tr class=\"$class\">
 		      <td align=\"center\" class=\"bt_listing_narrow\">$raquo</td>
-		      <td class=\"bt_listing\">$label</td>
+		      <td class=\"bt_listing\">$label_l10n</td>
 		      <td class=\"bt_listing\"><a href=\"$url\" title=\"$title\">$sub_l10n</a></td>
 		    </tr>
     "
