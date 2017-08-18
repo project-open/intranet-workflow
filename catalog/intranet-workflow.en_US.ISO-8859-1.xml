@@ -23,6 +23,7 @@
   <msg key="Execute">Execute</msg>
   <msg key="Holding_user">Holding User</msg>
   <msg key="holding_user">Holding User</msg>
+  <msg key="Label_Wf_assignments">WF Assignments</msg>
   <msg key="Modify">Modify</msg>
   <msg key="my_object">my object</msg>
   <msg key="Next_step_details">Next Step Details</msg>
@@ -39,12 +40,14 @@
   <msg key="Resource_Assignment">Resource Assignment</msg>
   <msg key="Status">Status</msg>
   <msg key="Submit">Submit</msg>
+  <msg key="Subscribe">Subscribe</msg>
   <msg key="Suspend_Case">Suspend Case</msg>
   <msg key="Task">Task</msg>
   <msg key="Task_name">Task Name</msg>
   <msg key="Task_state">Task State</msg>
   <msg key="Type">Type</msg>
   <msg key="Unassigned_Tasks">Unassigned Tasks</msg>
+  <msg key="Unsubscribe">Unsubscribe</msg>
   <msg key="What">What?</msg>
   <msg key="When">When?</msg>
   <msg key="Who">Who?</msg>
