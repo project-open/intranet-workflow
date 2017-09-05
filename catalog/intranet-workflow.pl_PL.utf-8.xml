@@ -4,13 +4,23 @@
   <msg key="Action">Czynność</msg>
   <msg key="Admin_workflows">Procesy administracyjne</msg>
   <msg key="All_Tasks">Wszystkie zadania</msg>
+  <msg key="Approve">Zaakceptuj</msg>
   <msg key="Assignee">Beneficjent</msg>
+  <msg key="Confirm_Quote">Potwierdź wycenę</msg>
+  <msg key="Label_Wf_assignments">Przydziały przepływów</msg>
+  <msg key="none">brak</msg>
+  <msg key="Nuke_Object">Usuń obiekt permanentnie</msg>
   <msg key="Object_Name">Nazwa Obiektu</msg>
   <msg key="Owner">Właściciel</msg>
+  <msg key="Quote">Wyceń</msg>
   <msg key="Relationship">Zależność</msg>
+  <msg key="Remove_From_Inbox">Usuń ze skrzynki odbiorczej</msg>
   <msg key="Status">Status</msg>
+  <msg key="Submit">Przekaż</msg>
+  <msg key="Subscribe">Zapisz się</msg>
   <msg key="Type">Typ</msg>
   <msg key="Unassigned_Tasks">Zadania nieprzypisane</msg>
+  <msg key="Workflow">Przepływ pracy</msg>
   <msg key="Workflow_Home">Przepływ Pracy</msg>
-  <msg key="Your_Tasks">Moje RFC'y</msg>
+  <msg key="Your_Tasks">Moje RFC&#39;y</msg>
 </message_catalog>
