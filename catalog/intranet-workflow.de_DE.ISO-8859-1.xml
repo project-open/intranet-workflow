@@ -23,7 +23,7 @@
   <msg key="Execute">Ausführen</msg>
   <msg key="Holding_user">Haltender Benutzer</msg>
   <msg key="holding_user">Haltender Benutzer</msg>
-  <msg key="Label_Wf_assignments">WF Zuweisungen</msg>
+  <msg key="Label_Wf_assignments">WF-Zuweisungen</msg>
   <msg key="Modify">Anpassen</msg>
   <msg key="my_object">Mein Objekt</msg>
   <msg key="Next_step_details">Details zu nächsten Schritten</msg>
@@ -52,6 +52,6 @@
   <msg key="When">Wann?</msg>
   <msg key="Who">Wer?</msg>
   <msg key="Workflow">Workflow</msg>
-  <msg key="Workflow_Home">Workflow Übersicht</msg>
+  <msg key="Workflow_Home">Workflow-Übersicht</msg>
   <msg key="Your_Tasks">Meine Änderungsanträge</msg>
 </message_catalog>
