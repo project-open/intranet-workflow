@@ -380,7 +380,7 @@ ad_proc -public im_workflow_graph_component {
 	    # More then one WF for this object.
 	    # This is possible in terms of the WF structure,
 	    # but not desired here.
-	    return ""
+	    return [lang::message::lookup "" intranet-workflow.More_than_one_case "There is currently more than one workflow active"]
 	}
     }
 
@@ -940,8 +940,8 @@ ad_proc -public im_workflow_journal_component {
 } {
     # Check if there is a WF case with object_id as reference object
     set cases [db_list case "select case_id from wf_cases where object_id = :object_id"]
-    if {[llength $cases] != 1} { return "" }
-
+    if {[llength $cases] < 1} { return "" }
+    if {[llength $cases] > 1} { return [lang::message::lookup "" intranet-workflow.More_than_one_case "There is currently more than one workflow active"] }
     set params [list [list case_id [lindex $cases 0]]]
     set result [ad_parse_template -params $params "/packages/acs-workflow/www/journal"]
     return $result
