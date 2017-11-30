@@ -53,6 +53,9 @@ begin
 		and t.workflow_key = c.workflow_key
 		and t.transition_key = p_transition_key;
 
+	-- Get some information about the object
+	select	o.creation_user into v_creation_user from acs_objects o where o.object_id = v_object_id;
+
 	v_journal_id := journal_entry__new(
 		null, v_case_id,
 		v_transition_key || ' set_object_status_id ' || im_category_from_id(p_custom_arg::integer),
@@ -135,6 +138,9 @@ begin
 		and t.workflow_key = c.workflow_key
 		and t.transition_key = p_transition_key;
 
+	-- Get some information about the object
+	select	o.creation_user into v_creation_user from acs_objects o where o.object_id = v_object_id;
+
 	IF v_status_id = p_custom_arg::integer THEN
 		v_journal_id := journal_entry__new(
 		    null, v_case_id,
@@ -175,6 +181,9 @@ begin
 		and t.case_id = c.case_id
 		and t.workflow_key = c.workflow_key
 		and t.transition_key = p_transition_key;
+
+	-- Get some information about the object
+	select	o.creation_user into v_creation_user from acs_objects o where o.object_id = v_object_id;
 
 	v_journal_id := journal_entry__new(
 	    null, v_case_id,
@@ -363,6 +372,9 @@ begin
 	select	group_id, group_name into v_group_id, v_group_name from groups
 	where	trim(lower(group_name)) = trim(lower(p_custom_arg));
 
+	-- Get some information about the object
+	select	o.creation_user into v_creation_user from acs_objects o where o.object_id = v_object_id;
+
 	IF v_group_id is not null THEN
 		v_journal_id := journal_entry__new(
 		    null, v_case_id,
@@ -409,6 +421,9 @@ begin
 		and t.case_id = c.case_id
 		and t.workflow_key = c.workflow_key
 		and t.transition_key = p_transition_key;
+
+	-- Get some information about the object
+	select	o.creation_user into v_creation_user from acs_objects o where o.object_id = v_object_id;
 
 	FOR row IN
 		select	r.object_id_two as user_id, 
