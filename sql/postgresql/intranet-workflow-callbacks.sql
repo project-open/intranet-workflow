@@ -776,5 +776,3 @@ begin
 	return 0; 
 end;$$ language 'plpgsql';
 
-SELECT workflow_case__notify_assignee (234,624,null, null, 'wf_po_approval_twostep_wf_assignment_notif');
-select * from acs_mail_lite_queue;
