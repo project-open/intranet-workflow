@@ -70,19 +70,23 @@ ad_proc -public im_workflow_replace_translations_in_string_helper {
 
 ad_proc -public im_workflow_start_wf {
     -object_id
-    -object_type_id
+    {-object_type_id ""}
+    {-workflow_key ""}
     {-skip_first_transition_p 0}
 } {
     Start a new WF for an object.
 } {
-    set wf_key [db_string wf "select aux_string1 from im_categories where category_id = :object_type_id" -default ""]
-    set wf_exists_p [db_string wf_exists "select count(*) from wf_workflows where workflow_key = :wf_key"]
+    if {"" eq $workflow_key} {
+	set workflow_key [db_string wf "select aux_string1 from im_categories where category_id = :object_type_id" -default ""]
+    }
+
+    set wf_exists_p [db_string wf_exists "select count(*) from wf_workflows where workflow_key = :workflow_key"]
     set case_id 0
 
     if {$wf_exists_p} {
 	set context_key ""
 	set case_id [wf_case_new \
-			 $wf_key \
+			 $workflow_key \
 			 $context_key \
 			 $object_id
 		    ]
