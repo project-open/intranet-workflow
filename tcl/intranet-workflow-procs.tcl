@@ -543,7 +543,7 @@ ad_proc -public im_workflow_graph_component {
 		<table class=\"table_list_page\">
 		<tr class=rowtitle>
 		  <td colspan=2 align=center class=rowtitle
-		  >[lang::message::lookup "" intranet-workflow.Currrent_assignees "Current Assignees"]</td>
+		  >[lang::message::lookup "" intranet-workflow.Current_assignees "Current Assignees"]</td>
 		</tr>
 		<tr class=rowtitle>
 			<td class=rowtitle>[lang::message::lookup "" intranet-workflow.What "What"]</td>
