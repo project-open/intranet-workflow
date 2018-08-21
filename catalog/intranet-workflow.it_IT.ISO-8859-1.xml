@@ -19,14 +19,17 @@
   <msg key="my_object">mio oggetto</msg>
   <msg key="Next_step_details">Dettagli next step</msg>
   <msg key="none">nessuno</msg>
+  <msg key="Nuke_Object">Elimina oggetto</msg>
   <msg key="Object_Name">Nome dell&#39;oggetto</msg>
   <msg key="Object_Owner">Proprietario dell&#39;oggetto</msg>
   <msg key="Owner">Proprietario</msg>
   <msg key="Past_actions">Azioni passate</msg>
   <msg key="Quote">Preventivo</msg>
   <msg key="Relationship">Relazione</msg>
+  <msg key="Remove_From_Inbox">Rimuovi da Inbox</msg>
   <msg key="Reset_Case">Resettare caso</msg>
   <msg key="Status">Stato</msg>
+  <msg key="Submit">Applica</msg>
   <msg key="Task_name">Nome dell&#39;attività</msg>
   <msg key="Task_state">Stato dell&#39;attività</msg>
   <msg key="Type">Tipo</msg>
