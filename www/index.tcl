@@ -10,7 +10,7 @@ ad_page_contract {
 
 set user_id [auth::require_login]
 set page_title [lang::message::lookup "" intranet-workflow.Workflow_Home "Workflow Home"]
-set workflow_home_inbox [im_workflow_home_inbox_component -relationship "assignment_group"]
+set workflow_home_inbox [im_workflow_home_inbox_component -relationship "assignment_group" -filter_object_type [im_opt_val filter_object_type] -filter_workflow_key [im_opt_val filter_workflow_key] -filter_subtype_id [im_opt_val filter_subtype_id] -filter_status_id [im_opt_val filter_status_id] -filter_owner_id [im_opt_val filter_owner_id]]
 set workflow_home_component [im_workflow_home_component]
 set return_url [im_url_with_query]
 set left_menu_p [parameter::get_from_package_key -package_key "intranet-core" -parameter ShowLeftFunctionalMenupP -default 0]

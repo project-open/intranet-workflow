@@ -1054,9 +1054,11 @@ ad_proc -public im_workflow_home_inbox_component {
     {-order_by_clause ""}
     {-relationship "assignment_group" }
     {-relationships {holding_user assignment_group none} }
-    {-object_type ""}
-    {-subtype_id ""}
-    {-status_id ""}
+    {-filter_workflow_key ""}
+    {-filter_object_type ""}
+    {-filter_subtype_id ""}
+    {-filter_status_id ""}
+    {-filter_owner_id ""}
 } {
     Returns a HTML table with the list of workflow tasks for the
     current user.
@@ -1200,6 +1202,8 @@ ad_proc -public im_workflow_home_inbox_component {
 
     # Get the list of all "open" (=enabled or started) tasks with their assigned users
     set tasks_sql "
+ select  *
+ from    (
 	select
 		ot.pretty_name as object_type_pretty,
 		o.object_id,
@@ -1227,6 +1231,11 @@ ad_proc -public im_workflow_home_inbox_component {
 		and t.state in ('enabled', 'started')
 		and t.transition_key = tr.transition_key
 		and t.workflow_key = tr.workflow_key
+                and (:filter_workflow_key is null OR ca.workflow_key = :filter_workflow_key)
+                and (:filter_object_type is null OR o.object_type = :filter_object_type)
+        ) t
+ where
+        (:filter_status_id is null OR :filter_status_id = t.status_id)
     "
 
     if {"" != $order_by_clause} {
@@ -1355,8 +1364,63 @@ ad_proc -public im_workflow_home_inbox_component {
     set enable_bulk_action_p [parameter::get_from_package_key -package_key "intranet-workflow" -parameter "EnableWorkflowInboxBulkActionsP" -default 0]
     if {!$enable_bulk_action_p} { set table_action_html "" }
 
-    set return_url [ad_conn url]?[ad_conn query]
+
+    set wf_options_sql "
+	select distinct
+    		ot.pretty_name,
+	        ot.object_type
+	from	wf_cases wc,
+                acs_object_types ot
+	where	wc.workflow_key = ot.object_type
+	order by
+		ot.pretty_name
+    "
+    set workflow_options [db_list_of_lists wf $wf_options_sql]
+    set workflow_options [linsert $workflow_options 0 [list "" ""]]
+# ad_return_complaint 1 $workflow_options
+    set workflow_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_workflow_key $workflow_options $filter_workflow_key]
+
+    set object_type_sql {
+	select distinct
+    		ot.pretty_name,
+	        ot.object_type
+	from	acs_object_types ot,
+                acs_objects o,
+                wf_cases wc
+	where	o.object_type = ot.object_type and
+                o.object_id = wc.object_id
+	order by
+		ot.pretty_name
+    }
+    set object_type_options [db_list_of_lists otypes $object_type_sql]
+    set object_type_options [linsert $object_type_options 0 [list "" ""]]
+    # ad_return_complaint 1 $object_type_options
+    set object_type_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_object_type $object_type_options $filter_object_type]
+
+
+    set return_url [im_url_with_query]
+    set filter_passthrough_vars [list]
+    set form_vars [ns_conn form]
+    if {"" == $form_vars} { set form_vars [ns_set create] }
+    array set form_hash [ns_set array $form_vars]
+    foreach var [array names form_hash] {
+        if {$var in {"filter_object_type" "filter_workflow_key"}} continue
+        lappend filter_passthrough_vars [list $var $form_hash($var)]
+    }
+
     return "
+        <form action=[ad_conn url] method=GET>
+        [export_vars -form $filter_passthrough_vars]
+        <table cellspacing=0 cellpadding=0 border=0>
+        <tr>
+<td><b>[_ intranet-core.Filter]</b>: &nbsp;</td>
+<td>[_ acs-workflow.Object_Type]: </td><td>$object_type_select</td><td>&nbsp;</td>
+<td>[_ intranet-workflow.Workflow]: </td><td>$workflow_select</td><td>&nbsp;</td>
+<td><input type=submit value=[_ intranet-core.Filter]></td>
+        </tr>
+        </table>
+        </form>
+
 	<form action=\"/intranet-workflow/inbox-action\" method=POST>
 	[export_vars -form {return_url}]
 	<table class=\"table_list_page\">
