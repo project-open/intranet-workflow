@@ -1353,7 +1353,9 @@ ad_proc -public im_workflow_home_inbox_component {
     
     set admin_action_options ""
     if {$user_is_admin_p} {
-	set admin_action_options "<option value=\"nuke\">[lang::message::lookup "" intranet-workflow.Nuke_Object "Nuke Object (Admin only)"]</option>\n"
+
+	append admin_action_options "<option value=\"terminate_wf\">[lang::message::lookup "" intranet-workflow.Terminate_Workflow "Terminate Workflow"]</option>\n"
+	append admin_action_options "<option value=\"nuke\">[lang::message::lookup "" intranet-workflow.Nuke_Object "Nuke Object (Admin only)"]</option>\n"
     }
 
     foreach wf_trans [lsort [array names action_hash]] {
@@ -1365,8 +1367,8 @@ ad_proc -public im_workflow_home_inbox_component {
 	<tr class=rowplain>
 	<td colspan=99 class=rowplain align=left>
 	    <select name=\"operation\">
-	    $admin_action_options
 	    <option value=\"delete_membership\">[lang::message::lookup "" intranet-workflow.Remove_From_Inbox "Remove from Inbox"]</option>
+	    $admin_action_options
 	    </select>
 	    <input type=submit name=submit value='[lang::message::lookup "" intranet-workflow.Submit "Submit"]'>
 	</td>

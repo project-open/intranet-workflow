@@ -62,6 +62,10 @@ foreach tid $task_id {
 	    "
 	}
 
+        terminate_wf {
+            im_workflow_cancel_workflow -object_id $object_id
+        }
+
 	nuke {
 	    switch $object_type {
 		im_ticket - im_project {
