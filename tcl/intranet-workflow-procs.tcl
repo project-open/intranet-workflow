@@ -1059,6 +1059,7 @@ ad_proc -public im_workflow_home_inbox_component {
     {-filter_subtype_id ""}
     {-filter_status_id ""}
     {-filter_owner_id ""}
+    {-filter_wf_action "" }
 } {
     Returns a HTML table with the list of workflow tasks for the
     current user.
@@ -1089,6 +1090,8 @@ ad_proc -public im_workflow_home_inbox_component {
 } {
     set bgcolor(0) " class=roweven "
     set bgcolor(1) " class=rowodd "
+
+#ad_return_complaint 1 $filter_wf_action
 
     set sql_date_format "YYYY-MM-DD"
     set current_user_id [ad_conn user_id]
@@ -1213,6 +1216,8 @@ ad_proc -public im_workflow_home_inbox_component {
 		acs_object__name(o.object_id) as object_name,
 		im_biz_object__get_type_id(o.object_id) as type_id,
 		im_biz_object__get_status_id(o.object_id) as status_id,
+                ca.workflow_key,
+                wft.pretty_name as workflow_name,
 		tr.transition_name,
 		tr.transition_key,
 		t.holding_user,
@@ -1223,7 +1228,8 @@ ad_proc -public im_workflow_home_inbox_component {
 		acs_objects o,
 		wf_cases ca,
 		wf_transitions tr,
-		wf_tasks t
+		wf_tasks t,
+                acs_object_types wft
 	where
 		ot.object_type = o.object_type
 		and o.object_id = ca.object_id
@@ -1231,6 +1237,7 @@ ad_proc -public im_workflow_home_inbox_component {
 		and t.state in ('enabled', 'started')
 		and t.transition_key = tr.transition_key
 		and t.workflow_key = tr.workflow_key
+                and ca.workflow_key = wft.object_type
                 and (:filter_workflow_key is null OR ca.workflow_key = :filter_workflow_key)
                 and (:filter_object_type is null OR o.object_type = :filter_object_type)
         ) t
@@ -1272,6 +1279,10 @@ ad_proc -public im_workflow_home_inbox_component {
     set ctr 0
     set table_body_html ""
     db_foreach tasks $tasks_sql {
+
+        # Only show entries matching the wf_action
+        set wf_action "$workflow_key.$transition_key"
+        if {"" ne $filter_wf_action && $filter_wf_action ne $wf_action} { continue }
 
 	set assigned_users ""
 	set assignees_pretty [im_workflow_replace_translations_in_string $assignees_pretty]
@@ -1365,6 +1376,11 @@ ad_proc -public im_workflow_home_inbox_component {
     if {!$enable_bulk_action_p} { set table_action_html "" }
 
 
+    # ---------------------------------------------------------------
+    # Filters
+    # ---------------------------------------------------------------
+
+    # Options for the type of the workflow
     set wf_options_sql "
 	select distinct
     		ot.pretty_name,
@@ -1377,9 +1393,9 @@ ad_proc -public im_workflow_home_inbox_component {
     "
     set workflow_options [db_list_of_lists wf $wf_options_sql]
     set workflow_options [linsert $workflow_options 0 [list "" ""]]
-# ad_return_complaint 1 $workflow_options
     set workflow_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_workflow_key $workflow_options $filter_workflow_key]
 
+    # Options for the type of object
     set object_type_sql {
 	select distinct
     		ot.pretty_name,
@@ -1394,17 +1410,30 @@ ad_proc -public im_workflow_home_inbox_component {
     }
     set object_type_options [db_list_of_lists otypes $object_type_sql]
     set object_type_options [linsert $object_type_options 0 [list "" ""]]
-    # ad_return_complaint 1 $object_type_options
     set object_type_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_object_type $object_type_options $filter_object_type]
 
 
+    # Options for the task type
+    set wf_action_sql "
+        select distinct
+                workflow_name || ' - ' || transition_name as value,
+                workflow_key || '.' || t.transition_key as key
+        from    ($tasks_sql) t
+        order by workflow_key || '.' || t.transition_key, workflow_name || ' - ' || transition_name
+    "
+#    ad_return_complaint 1 [im_ad_hoc_query -format html $wf_action_sql]
+    set wf_action_options [db_list_of_lists wfa $wf_action_sql]
+    set wf_action_options [linsert $wf_action_options 0 [list "" ""]]
+    set wf_action_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_wf_action $wf_action_options $filter_wf_action]
+
+    # Format the filters
     set return_url [im_url_with_query]
     set filter_passthrough_vars [list]
     set form_vars [ns_conn form]
     if {"" == $form_vars} { set form_vars [ns_set create] }
     array set form_hash [ns_set array $form_vars]
     foreach var [array names form_hash] {
-        if {$var in {"filter_object_type" "filter_workflow_key"}} continue
+        if {$var in {"filter_object_type" "filter_workflow_key" "filter_wf_action"}} continue
         lappend filter_passthrough_vars [list $var $form_hash($var)]
     }
 
@@ -1416,6 +1445,7 @@ ad_proc -public im_workflow_home_inbox_component {
 <td><b>[_ intranet-core.Filter]</b>: &nbsp;</td>
 <td>[_ acs-workflow.Object_Type]: </td><td>$object_type_select</td><td>&nbsp;</td>
 <td>[_ intranet-workflow.Workflow]: </td><td>$workflow_select</td><td>&nbsp;</td>
+<td>[_ intranet-helpdesk.Action]: </td><td>$wf_action_select</td><td>&nbsp;</td>
 <td><input type=submit value=[_ intranet-core.Filter]></td>
         </tr>
         </table>
