@@ -97,23 +97,28 @@ foreach tid $task_id {
 	    set msg "Batch operation '$operation' from WF inbox"
 	    set action "finish"
 
-	    # Get the list of attributes defined in this workflow
+	    # Get the list of attribute to be specified in this transition
+            # We can deal with transitions with zero or one attributes
 	    set attributes [db_list wf_attributes "
-		select	attribute_name
-		from	acs_attributes
-		where	object_type = :workflow_key   
+		select	aa.attribute_name
+		from	wf_transition_attribute_map tam,
+                        acs_attributes aa
+		where	tam.workflow_key = :workflow_key and
+                        tam.transition_key = :transition_key and
+                        tam.attribute_id = aa.attribute_id
 	    "]
+#            ad_return_complaint 1 "workflow_key=$workflow_key, transition_key=$transition_key, attrs=$attributes"
 	    if {[llength $attributes] > 1} { 
-		ad_return_complaint 1 "<b>Unsuitable Workflow</b>:<br>&nbsp;<br>
-                      The workflow '$workflow_key' of task '$object_name'<br>
-		      is not suitable for workflow bulk actions ('$operation'),<br>
-		      because it contains more than one attribute:<br>&nbsp;<br>
+		ad_return_complaint 1 "<b>Unsuitable Task for Bulk Action</b>:<br>&nbsp;<br>
+                      The transition '$transition_key' of workflow '$workflow_key' of task '$object_name'<br>
+		      is not suitable for workflow bulk action '$operation',<br>
+		      because it contains one or more attributes:<br>&nbsp;<br>
 		      [join $attributes ", "]<br>&nbsp;<br>
  		      Please perform this workflow task manually."
 		      ad_script_abort
 	    }
 	    set attribute_name [lindex $attributes 0]
-	    set attribute_hash($attribute_name) "t"
+	    if {"" ne $attribute_name} { set attribute_hash($attribute_name) "t" }
 
 	    # Check if the current user is assigned to the task and try to self-assign if not.
 	    set current_user_assigned_p [db_string task_assigned_users "
@@ -131,6 +136,8 @@ foreach tid $task_id {
 		}
 	    }
 
+	    ns_log Notice "inbox-action: set journal_id \[wf_task_action -user_id $current_user_id -msg '$msg' -attributes '[array get attribute_hash]' -assignments '[array get assignments]' '$tid' '$action']"
+
 	    set journal_id [wf_task_action \
 				-user_id $current_user_id \
 				-msg $msg \
@@ -139,6 +146,7 @@ foreach tid $task_id {
 				$tid \
 				$action \
 	    ]
+
 
 
 	}
