@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<message_catalog package_key="intranet-workflow" locale="zh_TW" charset="utf-8">
+
+  <msg key="Approve">批准</msg>
+  <msg key="Confirm_Quote">確認報價</msg>
+  <msg key="my_object">我的對象</msg>
+  <msg key="Nuke_Object">核心項目</msg>
+  <msg key="Quote">報價</msg>
+  <msg key="Relationship">關係</msg>
+  <msg key="Remove_From_Inbox">從收件箱中刪除</msg>
+  <msg key="Status">狀態</msg>
+  <msg key="Submit">提交</msg>
+  <msg key="Type">類型</msg>
+  <msg key="Unassigned_Tasks">未分配任務</msg>
+  <msg key="Workflow">工作流</msg>
+  <msg key="Your_Tasks">我的資料文件</msg>
+</message_catalog>
