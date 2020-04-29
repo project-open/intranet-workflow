@@ -1436,7 +1436,9 @@ ad_proc -public im_workflow_home_inbox_component {
     array set form_hash [ns_set array $form_vars]
     foreach var [array names form_hash] {
         if {$var in {"filter_object_type" "filter_workflow_key" "filter_wf_action"}} continue
-        lappend filter_passthrough_vars [list $var $form_hash($var)]
+	set val $form_hash($var)
+	if {[im_security_alert_check_alphanum -location "intranet-workflow.im_workflow_home_inbox_component" -value $val -message "Intrusion Attempt, VL-ID=2225" -severity "Critical"]} { set val "" }
+        lappend filter_passthrough_vars [list $var $val]
     }
 
     return "
