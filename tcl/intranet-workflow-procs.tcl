@@ -1107,7 +1107,7 @@ ad_proc -public im_workflow_home_inbox_component {
 
     # Order_by logic: Get form HTTP session or use default
     if {"" == $order_by_clause} {
-	set order_by [ns_set get $form_vars "wf_inbox_order_by"]
+	set order_by [im_opt_val -limit_to nohtml "wf_inbox_order_by"]
 	set order_by_clause [db_string order_by "
 		select	order_by_clause
 		from	im_view_columns
@@ -1134,7 +1134,7 @@ ad_proc -public im_workflow_home_inbox_component {
             regsub -all {[^a-zA-Z0-9_\-]} $key "_" key
         }
 
-	set value [ns_set get $form_vars $key]
+	set value [im_opt_val -limit_to nohtml $key]
 	append current_url "$key=[ns_urlencode $value]"
 	ns_log Notice "im_workflow_home_inbox_component: i=$i, key=$key, value=$value"
 	if { $i < [expr {$form_vars_size-1}] } { append url_vars "&" }
@@ -1435,9 +1435,8 @@ ad_proc -public im_workflow_home_inbox_component {
     if {"" == $form_vars} { set form_vars [ns_set create] }
     array set form_hash [ns_set array $form_vars]
     foreach var [array names form_hash] {
-        if {$var in {"filter_object_type" "filter_workflow_key" "filter_wf_action"}} continue
-	set val $form_hash($var)
-	if {[im_security_alert_check_alphanum -location "intranet-workflow.im_workflow_home_inbox_component" -value $val -message "Intrusion Attempt, VL-ID=2225" -severity "Critical"]} { set val "" }
+        if {$var in {"filter_object_type" "filter_workflow_key" "filter_wf_action"}} { continue }
+	set val [im_opt_val -limit_to nohtml $var]
         lappend filter_passthrough_vars [list $var $val]
     }
 
