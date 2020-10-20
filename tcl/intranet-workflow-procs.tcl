@@ -1167,17 +1167,30 @@ ad_proc -public im_workflow_home_inbox_component {
 		column_name,
 		column_render_tcl,
 		visible_for,
+		extra_select,
+		extra_from,
+		extra_where,
 		(order_by_clause is not null) as order_by_clause_exists_p
 	from	im_view_columns
 	where	view_id = :view_id
 	order by sort_order, column_id
     "
     set column_vars [list]
+
+    set extra_selects [list]
+    set extra_froms [list]
+    set extra_wheres [list]
+
     set colspan 1
     set table_header_html "<tr class=\"list-header\">\n"
     db_foreach column_list_sql $column_sql {
 	if {"" == $visible_for || [eval $visible_for]} {
 	    lappend column_vars "$column_render_tcl"
+
+	    if {"" ne $extra_select} { lappend extra_selects [eval "set a \"$extra_select\""] }
+	    if {"" ne $extra_from} { lappend extra_froms $extra_from }
+	    if {"" ne $extra_where} { lappend extra_wheres $extra_where }
+	    if {"" ne $order_by_clause && $order_by == $column_name} { set view_order_by_clause $order_by_clause }
 
 	    # Only localize reasonable columns
 	    if {[regexp {^[a-zA-Z0-9_]+$} $column_name]} {
@@ -1203,46 +1216,62 @@ ad_proc -public im_workflow_home_inbox_component {
     # ---------------------------------------------------------------
     # SQL Query
 
+    set where_clause [join $extra_wheres " and\n            "]
+    if { $where_clause ne "" } { set where_clause " and $where_clause" }
+    
+    set extra_select [join $extra_selects ",\n\t"]
+    if { $extra_select ne "" } { set extra_select ",\n\t$extra_select" }
+    
+    set extra_from [join $extra_froms ",\n\t"]
+    if { $extra_from ne "" } { set extra_from ",\n\t$extra_from" }
+    
+    set extra_where [join $extra_wheres "and\n\t"]
+    if { $extra_where ne "" } { set extra_where ",\n\t$extra_where" }
+
+
     # Get the list of all "open" (=enabled or started) tasks with their assigned users
     set tasks_sql "
- select  *
- from    (
-	select
-		ot.pretty_name as object_type_pretty,
-		o.object_id,
-		o.creation_user as owner_id,
-		o.creation_date,
-		im_name_from_user_id(o.creation_user) as owner_name,
-		acs_object__name(o.object_id) as object_name,
-		im_biz_object__get_type_id(o.object_id) as type_id,
-		im_biz_object__get_status_id(o.object_id) as status_id,
-                ca.workflow_key,
-                wft.pretty_name as workflow_name,
-		tr.transition_name,
-		tr.transition_key,
-		t.holding_user,
-		t.task_id,
-		im_workflow_task_assignee_names(t.task_id) as assignees_pretty
-	from
-		acs_object_types ot,
-		acs_objects o,
-		wf_cases ca,
-		wf_transitions tr,
-		wf_tasks t,
-                acs_object_types wft
+	select  t.*
+	from    (
+		select
+			ot.pretty_name as object_type_pretty,
+			o.object_id,
+			o.creation_user as owner_id,
+			o.creation_date,
+			im_name_from_user_id(o.creation_user) as owner_name,
+			acs_object__name(o.object_id) as object_name,
+			im_biz_object__get_type_id(o.object_id) as type_id,
+			im_biz_object__get_status_id(o.object_id) as status_id,
+			ca.workflow_key,
+			wft.pretty_name as workflow_name,
+			tr.transition_name,
+			tr.transition_key,
+			t.holding_user,
+			t.task_id,
+			im_workflow_task_assignee_names(t.task_id) as assignees_pretty
+			$extra_select
+		from
+			acs_object_types ot,
+			acs_objects o,
+			wf_cases ca,
+			wf_transitions tr,
+			wf_tasks t,
+			acs_object_types wft
+			$extra_from
+		where
+			ot.object_type = o.object_type
+			and o.object_id = ca.object_id
+			and ca.case_id = t.case_id
+			and t.state in ('enabled', 'started')
+			and t.transition_key = tr.transition_key
+			and t.workflow_key = tr.workflow_key
+			and ca.workflow_key = wft.object_type
+			and (:filter_workflow_key is null OR ca.workflow_key = :filter_workflow_key)
+			and (:filter_object_type is null OR o.object_type = :filter_object_type)
+			$extra_where
+	       ) t
 	where
-		ot.object_type = o.object_type
-		and o.object_id = ca.object_id
-		and ca.case_id = t.case_id
-		and t.state in ('enabled', 'started')
-		and t.transition_key = tr.transition_key
-		and t.workflow_key = tr.workflow_key
-                and ca.workflow_key = wft.object_type
-                and (:filter_workflow_key is null OR ca.workflow_key = :filter_workflow_key)
-                and (:filter_object_type is null OR o.object_type = :filter_object_type)
-        ) t
- where
-        (:filter_status_id is null OR :filter_status_id = t.status_id)
+	       (:filter_status_id is null OR :filter_status_id = t.status_id)
     "
 
     if {"" != $order_by_clause} {
