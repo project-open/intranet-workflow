@@ -231,7 +231,7 @@ values (260, 'workflow_home_inbox', '');
 
 insert into im_view_columns (column_id, view_id, column_name, column_render_tcl, sort_order) 
 values (26090,260,
-	'<input type=checkbox onclick="acs_ListCheckAll(''action'',this.checked)">',
+	'<input id=list_check_all_workflow type=checkbox>',
 	'"<input type=checkbox name=task_id value=$task_id id=action,$task_id>"',
 -10);
 

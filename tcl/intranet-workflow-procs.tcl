@@ -1470,6 +1470,13 @@ ad_proc -public im_workflow_home_inbox_component {
     }
 
     return "
+
+	<script type=\"text/javascript\" nonce=\"[im_csp_nonce]\">
+	window.addEventListener('load', function() {
+	    document.getElementById('list_check_all_workflow').addEventListener('click', function() { acs_ListCheckAll('action', this.checked) });
+	});
+	</script>
+
         <form action=[ad_conn url] method=GET>
         [export_vars -form $filter_passthrough_vars]
         <table cellspacing=0 cellpadding=0 border=0>
