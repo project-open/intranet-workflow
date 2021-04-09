@@ -93,7 +93,7 @@ ad_proc -public im_workflow_start_wf {
 	
 	# Determine the first task in the case to be executed and start+finisch the task.
 	if {1 == $skip_first_transition_p} {
-	    im_workflow_skip_first_transition -case_id $case_id
+	    im_workflow_skip_first_transition -case_id $case_id -case_assignment_id 0
 	}
     }
     return $case_id
@@ -1507,6 +1507,7 @@ ad_proc -public im_workflow_home_inbox_component {
 # This is useful for the very first transition of an approval WF
 
 ad_proc -public im_workflow_skip_first_transition {
+    {-case_assignment_id ""}
     -case_id:required
 } {
     Skip the first tasks of the workflow.
@@ -1514,6 +1515,11 @@ ad_proc -public im_workflow_skip_first_transition {
     There can be potentially more than one of such tasks..
 } {
     set user_id [ad_conn user_id]
+
+    # Assign the first task to the user himself and start the task
+    # Fraber 151102: Assign to anonymous user in order to suppress email alerts
+    set wf_modify_assignee $user_id
+    if {"" ne $case_assignment_id} { set user_id $case_assignment_id }
 
     # Get the first "enabled" task of the new case_id:
     set enabled_tasks [db_list enabled_tasks "
@@ -1526,9 +1532,6 @@ ad_proc -public im_workflow_skip_first_transition {
     ns_log Notice "im_workflow_skip_first_transition: enabled_tasks=$enabled_tasks"
 
     foreach task_id $enabled_tasks {
-	# Assign the first task to the user himself and start the task
-	# Fraber 151102: Assign to anonymous user in order to suppress email alerts
-	set wf_modify_assignee $user_id
 	set wf_case_assig [db_string wf_assig "select workflow_case__add_task_assignment (:task_id, :wf_modify_assignee, 'f')"]
 
 	# Start the task. Saves the user the work to press the "Start Task" button.
