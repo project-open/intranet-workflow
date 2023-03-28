@@ -345,7 +345,7 @@ ad_proc -public im_workflow_graph_sort_order {
 # Adapters to show WF components
 # ---------------------------------------------------------------------
 
-ad_proc -public im_workflow_graph_component {
+ad_proc -public im_workflow_graph_component_disabled {
     -object_id:required
 } {
     Show a Graphical WF representation of a workflow associated
@@ -578,6 +578,245 @@ ad_proc -public im_workflow_graph_component {
 	</table>
     "
 }
+
+
+ad_proc -public im_workflow_graph_component {
+    -object_id:required
+} {
+    Show a Graphical WF representation of a workflow associated
+    with an object.
+} {
+    set user_id [ad_conn user_id]
+    set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $user_id]
+    set subsite_id [ad_conn subsite_id]
+    set reassign_p [permission::permission_p -party_id $user_id -object_id $subsite_id -privilege "wf_reassign_tasks"]
+    set size [parameter::get_from_package_key -package_key "intranet-workflow" -parameter "WorkflowComponentWFGraphSize" -default "5,5"]
+    set bgcolor(0) " class=roweven "
+    set bgcolor(1) " class=rowodd "
+    set date_format "YYYY-MM-DD"
+    set project_id $object_id
+    set return_url [im_url_with_query]
+
+    # ---------------------------------------------------------------------
+    # Check if there is a WF case with object_id as reference object
+    # Do the case_ids query _before_ the foreach to avoid nesting SQLs.
+    set case_ids [db_list case_ids "select case_id from wf_cases where object_id = :object_id order by case_id"]
+    if {0 == [llength $case_ids]} { return "" }
+
+    set result_html ""
+    foreach case_id $case_ids {
+
+	# ---------------------------------------------------------------------
+	# WF graph component
+	db_1row workflow_info "
+		select	*
+		from	wf_workflows wfw,
+			wf_cases wfc
+		where	wfc.case_id = :case_id and
+			wfw.workflow_key = wfc.workflow_key
+	"
+
+	set params [list [list case_id $case_id] [list size $size]]
+	set graph_html [ad_parse_template -params $params "/packages/acs-workflow/www/case-state-graph"]
+
+	# ---------------------------------------------------------------------
+	# Who has been acting on the WF until now?
+	set history_html ""
+	set history_sql "
+	select	t.*,
+		tr.transition_name,
+		to_char(t.started_date, :date_format) as started_date_pretty,
+		to_char(t.finished_date, :date_format) as finished_date_pretty,
+		im_name_from_user_id(t.holding_user) as holding_user_name
+	from
+		wf_transitions tr, 
+		wf_tasks t
+	where
+		t.case_id = :case_id
+		and t.state not in ('enabled', 'started')
+		and tr.workflow_key = t.workflow_key
+		and tr.transition_key = t.transition_key
+		and trigger_type = 'user'
+	order by t.enabled_date
+    "
+	set cnt 0
+	db_foreach history $history_sql {
+	    append history_html "
+	    <tr $bgcolor([expr {$cnt % 2}])>
+		<td>$transition_name</td>
+		<td><nobr><a href=/intranet/users/view?user_id=$holding_user>$holding_user_name</a></nobr></td>
+		<td><nobr>$started_date_pretty</nobr></td>
+	    </tr>
+	"
+	    incr cnt
+	}
+
+	set history_html "
+		<table class=\"table_list_page\">
+		<tr class=rowtitle>
+		  <td colspan=3 align=center class=rowtitle>[lang::message::lookup "" intranet-workflow.Past_actions "Past Actions"]</td>
+		</tr>
+		<tr class=rowtitle>
+			<td class=rowtitle>[lang::message::lookup "" intranet-workflow.What "What"]</td>
+			<td class=rowtitle>[lang::message::lookup "" intranet-workflow.Who "Who"]</td>
+			<td class=rowtitle>[lang::message::lookup "" intranet-workflow.When "When"]</td>
+		</tr>
+		$history_html
+		</table>
+    "
+
+
+	# ---------------------------------------------------------------------
+	# Next Transition Information
+	set transition_html ""
+	set transition_sql "
+	select	t.*,
+		tr.*,
+		to_char(t.started_date, :date_format) as started_date_pretty,
+		to_char(t.finished_date, :date_format) as finished_date_pretty,
+		im_name_from_user_id(t.holding_user) as holding_user_name,
+		to_char(t.trigger_time, :date_format) as trigger_time_pretty
+	from
+		wf_transitions tr, 
+		wf_tasks t
+	where
+		t.case_id = :case_id
+		and t.state in ('enabled', 'started')
+		and tr.workflow_key = t.workflow_key
+		and tr.transition_key = t.transition_key
+	order by t.enabled_date
+    "
+	set cnt 0
+	db_foreach transition $transition_sql {
+	    append transition_html "<table class=\"table_list_page\">\n"
+	    append transition_html "<tr class=rowtitle><td colspan=2 class=rowtitle align=center>
+		[lang::message::lookup "" intranet-workflow.Next_step_details "Next Step: Details"]
+	</td></tr>\n"
+	    append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
+		[lang::message::lookup "" intranet-workflow.Task_name "Task Name"]
+	</td><td>$transition_name</td></tr>\n"
+	    incr cnt
+	    append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
+		[lang::message::lookup "" intranet-workflow.Holding_user "Holding User"]
+	</td><td>$holding_user_name</td></tr>\n"
+	    incr cnt
+	    append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
+		[lang::message::lookup "" intranet-workflow.Task_state "Task State"]
+	</td><td>$state</td></tr>\n"
+	    incr cnt
+	    append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
+		[lang::message::lookup "" intranet-workflow.Automatic_trigger "Automatic Trigger"]
+	</td><td>$trigger_time_pretty</td></tr>\n"
+	    incr cnt
+
+	    if {$reassign_p} {
+		append transition_html "
+		<tr class=rowplain><td colspan=2>
+		<ul>
+			<li><a href=[export_vars -base "/[im_workflow_url]/assign-yourself" {task_id return_url}]>[lang::message::lookup "" intranet-workflow.Assign_yourself "Assign yourself"]</a>
+			<li><a href=[export_vars -base "/[im_workflow_url]/task-assignees" {task_id return_url}]>[lang::message::lookup "" intranet-workflow.Assign_somebody_else "Assign somebody else"]</a>
+		</ul>
+		</td></tr>
+            "
+	    }
+
+	    append transition_html "</table>\n"
+	}
+
+	# ---------------------------------------------------------------------
+	# Who is assigned to the current transition?
+	set assignee_html ""
+	set assignee_sql "
+	select	t.*,
+		t.holding_user,
+		tr.transition_name,
+		ta.party_id,
+		acs_object__name(ta.party_id) as party_name,
+		im_name_from_user_id(ta.party_id) as user_name,
+		o.object_type as party_type
+	from
+		wf_transitions tr, 
+		wf_tasks t,
+		wf_task_assignments ta,
+		acs_objects o
+	where
+		t.case_id = :case_id
+		and t.state in ('enabled', 'started')
+		and tr.workflow_key = t.workflow_key
+		and tr.transition_key = t.transition_key
+		and ta.task_id = t.task_id
+		and ta.party_id = o.object_id
+	order by t.enabled_date
+        "
+	set cnt 0
+	db_foreach assignee $assignee_sql {
+	    if {"user" == $party_type} { set party_name $user_name } 
+	    if {$holding_user == $party_id} { set party_name "<b>$party_name</b>" }
+	    set party_link "<a href=/intranet/users/view?user_id=$party_id>$party_name</a>"
+	    if {"user" != $party_type} { set party_link $party_name	}
+	    append assignee_html "
+	    <tr $bgcolor([expr {$cnt % 2}])>
+		<td>$transition_name</td>
+		<td><nobr>$party_link</nobr></td>
+	    </tr>
+	"
+	    incr cnt
+	}
+	if {0 == $cnt} {
+	    append assignee_html "
+	    <tr $bgcolor([expr {$cnt % 2}])>
+		<td colspan=2><i>&nbsp;Nobody assigned</i></td>
+	    </tr>
+        "
+	}
+
+	set assignee_html "
+		<table class=\"table_list_page\">
+		<tr class=rowtitle>
+		  <td colspan=2 align=center class=rowtitle
+		  >[lang::message::lookup "" intranet-workflow.Current_assignees "Current Assignees"]</td>
+		</tr>
+		<tr class=rowtitle>
+			<td class=rowtitle>[lang::message::lookup "" intranet-workflow.What "What"]</td>
+			<td class=rowtitle>[lang::message::lookup "" intranet-workflow.Who "Who"]</td>
+		</tr>
+		$assignee_html
+        "
+	if {$reassign_p} {
+	    append assignee_html "
+		<tr class=rowplain><td colspan=2>
+		<ul>
+			<li><a href='[export_vars -base "/[im_workflow_url]/case?" {case_id}]'>[_ intranet-workflow.Debug_Case]</a>
+			<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url project_id {place_key "start"} {action_pretty "restart"}}]'>[_ intranet-workflow.Reset_Case]</a>
+		</ul>
+		</td></tr>
+        "
+	}
+	append assignee_html "</table>\n"
+
+	# This is the HTML for a single case
+	set case_html "
+	<table>
+	<tr valign=top>
+	<td>$graph_html</td>
+	<td>
+		<h3>$description</h3>
+		$history_html<br>
+		$transition_html<br>
+		$assignee_html
+	</td>
+	</tr>
+	</table>
+        "
+
+	append result_html "<td valign=top>$case_html</td>\n"
+
+    }
+
+    # Return the workflows beside each other
+    return "<table><tr>$result_html</tr></table>"
+}
+
 
 
 ad_proc -public im_workflow_action_component {
@@ -937,7 +1176,7 @@ append result "This task was completed by <a href='/shared/community-member?user
 }
 
 
-ad_proc -public im_workflow_journal_component {
+ad_proc -public im_workflow_journal_component_disabled {
     -object_id:required
 } {
     Show the WF Journal for an object
@@ -951,6 +1190,23 @@ ad_proc -public im_workflow_journal_component {
     return $result
 }
 
+ad_proc -public im_workflow_journal_component {
+    -object_id:required
+} {
+    Show the WF Journal for an object
+} {
+    # Check if there is a WF case with object_id as reference object
+    set case_ids [db_list case "select case_id from wf_cases where object_id = :object_id order by case_id"]
+    if {0 == [llength $case_ids]} { return "" }
+
+    set result ""
+    foreach case_id $case_ids {
+	set params [list [list case_id $case_id]]
+	append result [ad_parse_template -params $params "/packages/acs-workflow/www/journal"]
+    }
+
+    return $result
+}
 
 ad_proc -public im_workflow_new_journal {
     -case_id:required
@@ -977,9 +1233,6 @@ ad_proc -public im_workflow_new_journal {
     "]
     return $jid
 }
-
-
-
 
 ad_proc -public im_workflow_replacing_vacation_users {
 } {
@@ -1262,6 +1515,7 @@ ad_proc -public im_workflow_home_inbox_component {
 			ot.object_type = o.object_type
 			and o.object_id = ca.object_id
 			and ca.case_id = t.case_id
+			and ca.state in ('created', 'active')
 			and t.state in ('enabled', 'started')
 			and t.transition_key = tr.transition_key
 			and t.workflow_key = tr.workflow_key
@@ -1404,6 +1658,10 @@ ad_proc -public im_workflow_home_inbox_component {
 	</tr>
     "
     set enable_bulk_action_p [parameter::get_from_package_key -package_key "intranet-workflow" -parameter "EnableWorkflowInboxBulkActionsP" -default 0]
+    set wf_bulk_action_priv_p [db_string wf_bulk_action_priv "select count(*) from acs_privileges where privilege = 'wf_bulk_action'"]
+    if {$wf_bulk_action_priv_p} {
+	set enable_bulk_action_p [im_permission $current_user_id "wf_bulk_action"]
+    }
     if {!$enable_bulk_action_p} { set table_action_html "" }
 
 
