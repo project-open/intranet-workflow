@@ -16,11 +16,14 @@
 
 select acs_privilege__create_privilege('wf_reassign_tasks','Reassign tasks to other users','');
 select acs_privilege__add_child('admin', 'wf_reassign_tasks');
-
 select im_priv_create('wf_reassign_tasks','Accounting');
 select im_priv_create('wf_reassign_tasks','P/O Admins');
 select im_priv_create('wf_reassign_tasks','Senior Managers');
 
+select acs_privilege__create_privilege('wf_bulk_action','Perform bulk actions in the WF inbox','');
+select acs_privilege__add_child('admin', 'wf_bulk_action');
+select im_priv_create('wf_bulk_action','Accounting');
+select im_priv_create('wf_bulk_action','Senior Managers');
 
 -- ------------------------------------------------------
 -- Returns a string with comma separated names of users/parties
