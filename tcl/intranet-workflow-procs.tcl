@@ -1481,6 +1481,28 @@ ad_proc -public im_workflow_home_inbox_component {
     set extra_where [join $extra_wheres "and\n\t"]
     if { $extra_where ne "" } { set extra_where ",\n\t$extra_where" }
 
+    # The list of all "deleted" states of all ]po[ object type
+    # This list needs to grow when adding new object types.
+    #  49 		# Intranet Company Status 
+    #  82 		# Intranet Project Status
+    #  3503 		# Intranet Investment Status
+    #  3812 		# Intranet Cost Status
+    #  10100 		# Intranet Employee Pipeline State
+    #  10131 		# Intranet Invoice Status
+    #  11002 		# Intranet SQL Selector Status
+    #  11402 		# Intranet Notes Status
+    #  15002 		# Intranet Report Status
+    #  16002 		# Intranet Absence Status
+    #  17090 		# Intranet Timesheet Conf Status
+    #  30097 		# Intranet Ticket Status
+    #  47001 		# Intranet Invoice Item Status
+    #  71002 		# Intranet Baseline Status
+    #  73002 		# Intranet Planning Status
+    #  75098 		# Intranet Risk Status
+    #  85002 		# Intranet Rule Status
+    #  86002 		# Intranet Sencha Preferences Status
+    #  86202 		# Intranet Sencha Column Configurations Status
+    set deleted_status_ids {49 82 3503 3812 10100 10131 11002 11402 15002 16002 17090 30097 47001 71002 73002 75098 85002 86002 86202}
 
     # Get the list of all "open" (=enabled or started) tasks with their assigned users
     set tasks_sql "
@@ -1525,7 +1547,8 @@ ad_proc -public im_workflow_home_inbox_component {
 			$extra_where
 	       ) t
 	where
-	       (:filter_status_id is null OR :filter_status_id = t.status_id)
+		t.status_id not in ([join $deleted_status_ids ","]) and
+		(:filter_status_id is null OR :filter_status_id = t.status_id)
     "
 
     if {"" != $order_by_clause} {
