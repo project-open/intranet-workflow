@@ -93,7 +93,7 @@ ad_proc -public im_workflow_start_wf {
 	
 	# Determine the first task in the case to be executed and start+finisch the task.
 	if {1 == $skip_first_transition_p} {
-	    im_workflow_skip_first_transition -case_id $case_id -case_assignment_id 0
+	    im_workflow_skip_first_transition -case_id $case_id
 	}
     }
     return $case_id
@@ -545,11 +545,31 @@ ad_proc -public im_workflow_graph_component {
 		$assignee_html
         "
 	if {$reassign_p} {
+
+	    set debug_case_help "Show extended debug information"
+	    set start_new_case_help "Create a new case of the same workflow and start it from scratch"
+	    set nuke_case_help "Nuke this workflow from the database without a trace"
+	    set restart_case_help "Restart this workflow from the start, maintaining the journal"
+
 	    append assignee_html "
 		<tr class=rowplain><td colspan=2>
 		<ul>
-			<li><a href='[export_vars -base "/[im_workflow_url]/case?" {case_id}]'>[_ intranet-workflow.Debug_Case]</a>
-			<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url case_id {place_key "start"} {action_pretty "restart"}}]'>[_ intranet-workflow.Reset_Case]</a>
+		<li><a href='[export_vars -base "/[im_workflow_url]/case?" {case_id}]'>
+                           [lang::message::lookup "" intranet-workflow.Debug_case "Debug case"]
+			   [im_gif help $debug_case_help]
+                </a>
+		<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url case_id {action "copy"} {action_pretty "Copy"}}]'>
+                           [lang::message::lookup "" intranet-workflow.Copy_Case "Copy and start new case"]
+			   [im_gif help $start_new_case_help]
+                </a>
+		<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url case_id {action "nuke"} {action_pretty "Nuke"}}]'>
+                           [lang::message::lookup "" intranet-workflow.Nuke_Case "Nuke case"]
+			   [im_gif help $nuke_case_help]
+                </a>
+		<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url case_id {action "restart"} {place_key "start"} {action_pretty "Restart"}}]'>
+                           [lang::message::lookup "" intranet-workflow.Restart_Case "Restart case"]
+			   [im_gif help $restart_case_help]
+                </a>
 		</ul>
 		</td></tr>
         "
@@ -1535,7 +1555,6 @@ ad_proc -public im_workflow_home_inbox_component {
 # This is useful for the very first transition of an approval WF
 
 ad_proc -public im_workflow_skip_first_transition {
-    {-case_assignment_id ""}
     -case_id:required
 } {
     Skip the first tasks of the workflow.
@@ -1547,9 +1566,9 @@ ad_proc -public im_workflow_skip_first_transition {
     # Assign the first task to the user himself and start the task
     # Fraber 151102: Assign to anonymous user in order to suppress email alerts
     set wf_modify_assignee $user_id
-    if {"" ne $case_assignment_id} { set user_id $case_assignment_id }
 
     # Get the first "enabled" task of the new case_id:
+    # These enabled tasks should have their normal assignments already
     set enabled_tasks [db_list enabled_tasks "
 		select	task_id
 		from	wf_tasks
@@ -1560,12 +1579,23 @@ ad_proc -public im_workflow_skip_first_transition {
     ns_log Notice "im_workflow_skip_first_transition: user_id=$user_id, enabled_tasks=$enabled_tasks"
 
     foreach task_id $enabled_tasks {
-	set wf_case_assig [db_string wf_assig "select workflow_case__add_task_assignment (:task_id, :wf_modify_assignee, 'f')"]
+	ns_log Notice "im_workflow_skip_first_transition: task_id=$task_id"
+
+	# We are doing a manual assignment for user_id because we are going to 'process' it
+	# We do the assignment using a manual insert to avoid notifying the user.
+	set assig_exists_p [db_string assig_exists_p "select count(*) from wf_task_assignments where task_id = :task_id and party_id = :user_id"]
+	if {!$assig_exists_p} {
+	    db_dml assig "insert into wf_task_assignments (task_id, party_id) values (:task_id, :user_id)"
+	}
 
 	# Start the task. Saves the user the work to press the "Start Task" button.
-	set journal_id [db_string wf_action "select workflow_case__begin_task_action (:task_id,'start','[ad_conn peeraddr]',:user_id,'')"]
-	set journal_id2 [db_string wf_start "select workflow_case__start_task (:task_id,:user_id,:journal_id)"]
+	ns_log Notice "im_workflow_skip_first_transition: select workflow_case__begin_task_action ($task_id, 'start', '[ad_conn peeraddr]', $user_id, '')"
+	set journal_id [db_string wf_action "select workflow_case__begin_task_action (:task_id, 'start', '[ad_conn peeraddr]', :user_id, '')"]
+	ns_log Notice "im_workflow_skip_first_transition: select workflow_case__start_task ($task_id, $user_id, $journal_id)"
+	set journal_id2 [db_string wf_start "select workflow_case__start_task (:task_id, :user_id, :journal_id)"]
+
 	# Finish the task. That forwards the token to the next transition.
+	ns_log Notice "im_workflow_skip_first_transition: select workflow_case__finish_task($task_id, $journal_id)"
 	set journal_id3 [db_string wf_finish "select workflow_case__finish_task(:task_id, :journal_id)"]
     }
 }

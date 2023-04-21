@@ -8,7 +8,7 @@
 <p>&nbsp;</p>
 
 <form action=reset-case-2 method=POST>
-<%= [export_vars -form {return_url case_id task_id place_key action_pretty}] %>
+<%= [export_vars -form {return_url case_id task_id place_key action action_pretty}] %>
 <input type="submit" name="button_cancel" value="<%= [lang::message::lookup "" intranet-workflow.Cancel_Button "Cancel"] %>">
 <input type="submit" name="button_confirm" value="<%= [lang::message::lookup "" intranet-workflow.Confirm_Button "Confirm %action_pretty%"] %>">
 </form>

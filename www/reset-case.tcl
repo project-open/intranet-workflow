@@ -13,6 +13,7 @@ ad_page_contract {
     { task_id:integer 0}
     { case_id:integer 0}
     { place_key "tagged"}
+    { action "undefined" }
     { action_pretty "Undefined" }
     { return_url ""}
 }
