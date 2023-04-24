@@ -1530,7 +1530,7 @@ ad_proc -public im_workflow_home_inbox_component {
 <table cellspacing=0 cellpadding=0 border=0>
 <tr>
 <td>
-<b>[_ intranet-core.Filter]</b>: &nbsp;
+<!-- <b>[_ intranet-core.Filter]</b>: &nbsp; -->
 <nobr>[_ acs-workflow.Object_Type]: $object_type_select</nobr> &nbsp; 
 <nobr>[_ intranet-workflow.Workflow]: $workflow_select</nobr> &nbsp; 
 <nobr>[_ intranet-helpdesk.Action]: $wf_action_select</nobr> &nbsp; 
