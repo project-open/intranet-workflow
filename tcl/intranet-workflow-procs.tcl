@@ -1527,15 +1527,17 @@ ad_proc -public im_workflow_home_inbox_component {
 
         <form action=[ad_conn url] method=GET>
         [export_vars -form $filter_passthrough_vars]
-        <table cellspacing=0 cellpadding=0 border=0>
-        <tr>
-<td><b>[_ intranet-core.Filter]</b>: &nbsp;</td>
-<td>[_ acs-workflow.Object_Type]: </td><td>$object_type_select</td><td>&nbsp;</td>
-<td>[_ intranet-workflow.Workflow]: </td><td>$workflow_select</td><td>&nbsp;</td>
-<td>[_ intranet-helpdesk.Action]: </td><td>$wf_action_select</td><td>&nbsp;</td>
-<td><input type=submit value=[_ intranet-core.Filter]></td>
-        </tr>
-        </table>
+<table cellspacing=0 cellpadding=0 border=0>
+<tr>
+<td>
+<b>[_ intranet-core.Filter]</b>: &nbsp;
+<nobr>[_ acs-workflow.Object_Type]: $object_type_select</nobr> &nbsp; 
+<nobr>[_ intranet-workflow.Workflow]: $workflow_select</nobr> &nbsp; 
+<nobr>[_ intranet-helpdesk.Action]: $wf_action_select</nobr> &nbsp; 
+<input type=submit value=[_ intranet-core.Filter]>
+</td>
+</tr>
+</table>
         </form>
 
 	<form action=\"/intranet-workflow/inbox-action\" method=POST>
