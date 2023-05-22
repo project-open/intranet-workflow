@@ -371,7 +371,8 @@ ad_proc -public im_workflow_graph_component {
 	# ---------------------------------------------------------------------
 	# WF graph component
 	db_1row workflow_info "
-		select	*
+		select	*,
+			wfc.state as case_state
 		from	wf_workflows wfw,
 			wf_cases wfc
 		where	wfc.case_id = :case_id and
@@ -576,13 +577,18 @@ ad_proc -public im_workflow_graph_component {
 	}
 	append assignee_html "</table>\n"
 
+	set status_html "[_ intranet-core.Status]: $case_state"
+	if {$case_state in {"created" "active"}} { set status_html "" }
+
 	# This is the HTML for a single case
 	set case_html "
 	<table>
 	<tr valign=top>
 	<td>$graph_html</td>
 	<td>
-		<h3>$description</h3>
+		<h3>[lang::message::lookup "" intranet-workflow.workflow_$workflow_key $workflow_key]</h3>
+		<p>[_ intranet-core.Description]: $description</p>
+		$status_html
 		$history_html<br>
 		$transition_html<br>
 		$assignee_html
@@ -1317,6 +1323,8 @@ ad_proc -public im_workflow_home_inbox_component {
 		t.status_id not in ([join $deleted_status_ids ","]) and
 		(:filter_status_id is null OR :filter_status_id = t.status_id)
     "
+
+    # ad_return_complaint 1 "<pre>$tasks_sql</pre><br>[im_ad_hoc_query -format html $tasks_sql]"
 
     if {"" != $order_by_clause} {
 	append tasks_sql "\torder by $order_by_clause"
