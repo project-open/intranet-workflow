@@ -77,6 +77,12 @@ switch $action {
 	db_dml delete_case "delete from wf_cases where case_id = :case_id"
     }
 
+    "cancel" {
+	ns_log Notice "reset-case-2: Canceling  case_id=$case_id"
+	im_workflow_new_journal -case_id $case_id -action "cancel WF" -action_pretty "Cancel WF" -message "Canceling WF using 'Cancel Case' action in WF component"
+	im_workflow_cancel_workflow -case_id $case_id
+    }
+
     "copy" {
 	ns_log Notice "reset-case-2: Copying case_id=$case_id"
 	# Start a new workflow case

@@ -550,6 +550,7 @@ ad_proc -public im_workflow_graph_component {
 	    set debug_case_help "Show extended debug information"
 	    set start_new_case_help "Create a new case of the same workflow and start it from scratch"
 	    set nuke_case_help "Nuke this workflow from the database without a trace"
+	    set cancel_case_help "Cancel this workflow. No further WF action will occur."
 	    set restart_case_help "Restart this workflow from the start, maintaining the journal"
 
 	    append assignee_html "
@@ -559,9 +560,9 @@ ad_proc -public im_workflow_graph_component {
                            [lang::message::lookup "" intranet-workflow.Debug_case "Debug case"]
 			   [im_gif help $debug_case_help]
                 </a>
-		<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url case_id {action "copy"} {action_pretty "Copy"}}]'>
-                           [lang::message::lookup "" intranet-workflow.Copy_Case "Copy and start new case"]
-			   [im_gif help $start_new_case_help]
+		<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url case_id {action "cancel"} {action_pretty "Cancel"}}]'>
+                           [lang::message::lookup "" intranet-workflow.Cancel_Case "Cancel case"]
+			   [im_gif help $cancel_case_help]
                 </a>
 		<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url case_id {action "nuke"} {action_pretty "Nuke"}}]'>
                            [lang::message::lookup "" intranet-workflow.Nuke_Case "Nuke case"]
@@ -570,6 +571,10 @@ ad_proc -public im_workflow_graph_component {
 		<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url case_id {action "restart"} {place_key "start"} {action_pretty "Restart"}}]'>
                            [lang::message::lookup "" intranet-workflow.Restart_Case "Restart case"]
 			   [im_gif help $restart_case_help]
+                </a>
+		<li><a href='[export_vars -base "/intranet-workflow/reset-case?" {return_url case_id {action "copy"} {action_pretty "Copy"}}]'>
+                           [lang::message::lookup "" intranet-workflow.Copy_Case "Copy and start new case"]
+			   [im_gif help $start_new_case_help]
                 </a>
 		</ul>
 		</td></tr>
@@ -1718,24 +1723,31 @@ ad_proc im_workflow_object_permissions {
 #
 
 ad_proc im_workflow_cancel_workflow {
-    -object_id:required
+    {-object_id ""}
+    {-case_id ""}
 } {
     Cancel the workflow in case the underlying object gets closed, 
     such like a ticket of a deleted project.
 } {
     set journal_id ""
-    
+
+    set case_ids [list $case_id]
+    if {"" ne $object_id} {
+	set case_ids [db_list case_ids "select case_id from wf_cases where object_id = :object_id"]
+    }
+    lappend case_ids 0
+
     # Delete all tokens of the case
     db_dml delete_tokens "
     	delete from wf_tokens
-    	where case_id in (select case_id from wf_cases where object_id = :object_id) and
+    	where case_id in ([join $case_ids ","]) and
     	state in ('free', 'locked')
     "
     
     set cancel_tasks_sql "
     	select 	task_id as wf_task_id
     	from	wf_tasks
-    	where	case_id in (select case_id from wf_cases where object_id = :object_id) and
+    	where	case_id in ([join $case_ids ","]) and
 		state in ('started')
     "
     db_foreach cancel_started_tasks $cancel_tasks_sql {
@@ -1750,12 +1762,16 @@ ad_proc im_workflow_cancel_workflow {
     set del_enabled_tasks_sql "
     	select 	task_id as wf_task_id
     	from	wf_tasks
-    	where	case_id in (select case_id from wf_cases where object_id = :object_id) and
+    	where	case_id in ([join $case_ids ","]) and
 		state in ('enabled')
     "
     db_foreach cancel_started_tasks $del_enabled_tasks_sql {
         ns_log Notice "im_workflow_cancel_workflow: deleting enabled task $wf_task_id"
 	db_dml del_task "update wf_tasks set state = 'canceled' where task_id = :wf_task_id"
     }
+
+    # Cancel the case itself
+    db_dml cancel_case "update wf_cases set state = 'canceled' where case_id in ([join $case_ids ","])"
+
 }
 
