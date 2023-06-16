@@ -451,13 +451,18 @@ ad_proc -public im_workflow_graph_component {
     "
 	set cnt 0
 	db_foreach transition $transition_sql {
+	    regsub -all " " $transition_name "_" next_action_key; # L10ned version of next action
+	    set next_action_l10n [lang::message::lookup "" intranet-workflow.$next_action_key $transition_name]
+	    set action_url [export_vars -base "/[im_workflow_url]/task" {return_url task_id}]
+	    set action_link "<a class=button href=$action_url>$next_action_l10n</a>"
+
 	    append transition_html "<table class=\"table_list_page\">\n"
 	    append transition_html "<tr class=rowtitle><td colspan=2 class=rowtitle align=center>
 		[lang::message::lookup "" intranet-workflow.Next_step_details "Next Step: Details"]
 	</td></tr>\n"
 	    append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
-		[lang::message::lookup "" intranet-workflow.Task_name "Task Name"]
-	</td><td>$transition_name</td></tr>\n"
+		[lang::message::lookup "" intranet-workflow.Task "Task"]
+	</td><td>$action_link</td></tr>\n"
 	    incr cnt
 	    append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
 		[lang::message::lookup "" intranet-workflow.Holding_user "Holding User"]
@@ -467,10 +472,13 @@ ad_proc -public im_workflow_graph_component {
 		[lang::message::lookup "" intranet-workflow.Task_state "Task State"]
 	</td><td>$state</td></tr>\n"
 	    incr cnt
-	    append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
+
+	    set ttt {
+		append transition_html "<tr $bgcolor([expr {$cnt % 2}])><td>
 		[lang::message::lookup "" intranet-workflow.Automatic_trigger "Automatic Trigger"]
 	</td><td>$trigger_time_pretty</td></tr>\n"
-	    incr cnt
+		incr cnt
+	    }
 
 	    if {$reassign_p} {
 		append transition_html "
@@ -1090,6 +1098,7 @@ ad_proc -public im_workflow_home_inbox_component {
     {-filter_subtype_id ""}
     {-filter_status_id ""}
     {-filter_owner_id ""}
+    {-filter_assignee_id ""}
     {-filter_wf_action "" }
 } {
     Returns a HTML table with the list of workflow tasks for the
@@ -1121,8 +1130,6 @@ ad_proc -public im_workflow_home_inbox_component {
 } {
     set bgcolor(0) " class=roweven "
     set bgcolor(1) " class=rowodd "
-
-#ad_return_complaint 1 $filter_wf_action
 
     set sql_date_format "YYYY-MM-DD"
     set current_user_id [ad_conn user_id]
@@ -1322,6 +1329,10 @@ ad_proc -public im_workflow_home_inbox_component {
 			and ca.workflow_key = wft.object_type
 			and (:filter_workflow_key is null OR ca.workflow_key = :filter_workflow_key)
 			and (:filter_object_type is null OR o.object_type = :filter_object_type)
+			and (:filter_owner_id is null OR o.creation_user = :filter_owner_id)
+			and (:filter_assignee_id is null OR (
+				t.task_id in (select task_id from wf_task_assignments where party_id = :filter_assignee_id)
+			))
 			$extra_where
 	       ) t
 	where
@@ -1473,16 +1484,23 @@ ad_proc -public im_workflow_home_inbox_component {
     # ---------------------------------------------------------------
 
     # Options for the type of the workflow
+    set active_cases_l10n [lang::message::lookup "" intranet-workflow.active_cases "active cases"]
     set wf_options_sql "
-	select distinct
-    		ot.pretty_name,
-	        ot.object_type
-	from	wf_cases wc,
-                acs_object_types ot
-	where	wc.workflow_key = ot.object_type
+	select	distinct
+		pretty_name || ' (' || active_cases || ' ' || '$active_cases_l10n' || ')',
+		object_type
+	from	(select	ot.pretty_name,
+			ot.object_type,
+			(select count(*) from wf_cases wfc where ot.object_type = wfc.workflow_key and state in ('active')) as active_cases
+		from	acs_object_types ot
+		) t
+	where
+		active_cases > 0
 	order by
-		ot.pretty_name
+		pretty_name || ' (' || active_cases || ' ' || '$active_cases_l10n' || ')'
     "
+    # ad_return_complaint 1 $wf_options_sql
+
     set workflow_options [db_list_of_lists wf $wf_options_sql]
     set workflow_options [linsert $workflow_options 0 [list "" ""]]
     set workflow_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_workflow_key $workflow_options $filter_workflow_key]
@@ -1518,6 +1536,47 @@ ad_proc -public im_workflow_home_inbox_component {
     set wf_action_options [linsert $wf_action_options 0 [list "" ""]]
     set wf_action_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_wf_action $wf_action_options $filter_wf_action]
 
+
+    # Options for owner
+    set owner_sql {
+	select distinct
+    		im_name_from_user_id(o.creation_user),
+		o.creation_user
+	from	wf_cases wfc,
+                acs_objects o
+	where	o.object_id = wfc.case_id and
+		wfc.state in ('active')
+	order by
+		im_name_from_user_id(o.creation_user)
+    }
+    set owner_options [db_list_of_lists otypes $owner_sql]
+    set owner_options [linsert $owner_options 0 [list "" ""]]
+    set owner_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_owner_id $owner_options $filter_owner_id]
+
+
+    # Options for assignee
+    set assignee_sql {
+	select distinct
+    		im_name_from_user_id(assignee_id),
+		assignee_id
+	from	(
+			select	wfta.party_id as assignee_id
+			from	wf_cases wfc,
+				wf_tasks wft,
+				wf_task_assignments wfta
+			where	wfc.state in ('active') and
+				wfc.case_id = wft.case_id and
+				wft.state in ('started', 'enabled') and
+				wft.task_id = wfta.task_id
+		) t
+	order by
+		im_name_from_user_id(assignee_id)
+    }
+    set assignee_options [db_list_of_lists otypes $assignee_sql]
+    set assignee_options [linsert $assignee_options 0 [list "" ""]]
+    set assignee_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_assignee_id $assignee_options $filter_assignee_id]
+
+
     # Format the filters
     set return_url [im_url_with_query]
     set filter_passthrough_vars [list]
@@ -1525,13 +1584,12 @@ ad_proc -public im_workflow_home_inbox_component {
     if {"" == $form_vars} { set form_vars [ns_set create] }
     array set form_hash [ns_set array $form_vars]
     foreach var [array names form_hash] {
-        if {$var in {"filter_object_type" "filter_workflow_key" "filter_wf_action"}} { continue }
+        if {$var in {"filter_object_type" "filter_workflow_key" "filter_wf_action" "filter_owner_id" "filter_assignee_id"}} { continue }
 	set val [im_opt_val -limit_to nohtml $var]
         lappend filter_passthrough_vars [list $var $val]
     }
 
     return "
-
 	<script type=\"text/javascript\" nonce=\"[im_csp_nonce]\">
 	window.addEventListener('load', function() {
 	    document.getElementById('list_check_all_workflow').addEventListener('click', function() { acs_ListCheckAll('action', this.checked) });
@@ -1546,6 +1604,8 @@ ad_proc -public im_workflow_home_inbox_component {
 <!-- <b>[_ intranet-core.Filter]</b>: &nbsp; -->
 <nobr>[_ acs-workflow.Object_Type]: $object_type_select</nobr> &nbsp; 
 <nobr>[_ intranet-workflow.Workflow]: $workflow_select</nobr> &nbsp; 
+<nobr>[lang::message::lookup "" intranet-workflow.Owner "Owner"]: $owner_select</nobr> &nbsp; 
+<nobr>[lang::message::lookup "" intranet-workflow.Assignee "Assignee"]: $assignee_select</nobr> &nbsp; 
 <nobr>[_ intranet-helpdesk.Action]: $wf_action_select</nobr> &nbsp; 
 <input type=submit value=[_ intranet-core.Filter]>
 </td>
