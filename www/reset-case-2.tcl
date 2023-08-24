@@ -117,13 +117,12 @@ switch $action {
 	# The case is already there, so we should not execute wf_case__new anymore. It just creates the object.
 
 	# Safe option (working): Delete all tokens and tasks:
-	# db_dml delete_tokens "delete from wf_tokens where case_id = :case_id"
-	# db_dml delete_tasks "delete from wf_tasks where case_id = :case_id"
+	db_dml delete_tokens "delete from wf_tokens where case_id = :case_id"
+	db_dml delete_tasks "delete from wf_tasks where case_id = :case_id"
 
-	# Softwer option (apparently working): Keep old/finished tasks/tokens in place for audit
-	# Delete active tokens, leave old ones in their places
-	db_dml delete_tokens "delete from wf_tokens where case_id = :case_id and state in ('free', 'locked')"
-	db_dml delete_tasks "delete from wf_tasks where case_id = :case_id and state in ('enabled', 'started')"
+	# fraber 2023-08-23: Softer option (Keep old/finished tasks/tokens in place for audit) does not work! 
+	# db_dml delete_tokens "delete from wf_tokens where case_id = :case_id and state in ('free', 'locked')"
+	# db_dml delete_tasks "delete from wf_tasks where case_id = :case_id and state in ('enabled', 'started')"
 
 	# Start the workflow:
 	# Sets wf_case.status = 'active, puts a token in 'start' and sweep_automatic_transitions()
