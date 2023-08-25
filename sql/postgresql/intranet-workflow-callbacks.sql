@@ -211,7 +211,7 @@ declare
 	v_creation_user		integer;	v_creation_ip		varchar;
 	v_journal_id		integer;	v_object_type		varchar;
 	v_transition_key	varchar;	v_owner_id		integer;
-	v_owner_name		varchar;	row			RECORD;
+	v_owner_name		varchar;
 begin
 	-- Get information about the transition and the "environment"
 	select	t.case_id, c.object_id, o.creation_user, o.creation_ip, o.object_type, tr.transition_key
@@ -223,7 +223,15 @@ begin
 		and t.workflow_key = tr.workflow_key
 		and t.transition_key = tr.transition_key;
 
-	select	v_creation_user, im_name_from_user_id(v_creation_user) into v_owner_id, v_owner_name;
+	IF v_object_id is not null THEN
+		-- Use the real creation_user of the underlying BizObject if present
+		select	bizobj.creation_user, im_name_from_user_id(bizobj.creation_user) into v_owner_id, v_owner_name
+		from	acs_objects bizobj
+		where	bizobj.object_id = v_object_id;
+	ELSE
+		-- Use the creation_user of the WF as a default
+		select	v_creation_user, im_name_from_user_id(v_creation_user) into v_owner_id, v_owner_name;
+	END IF;
 
 	IF v_owner_id is not null THEN
 		v_journal_id := journal_entry__new(
