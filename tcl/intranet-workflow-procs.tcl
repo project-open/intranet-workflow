@@ -1021,10 +1021,13 @@ ad_proc -public im_workflow_new_journal {
 }
 
 ad_proc -public im_workflow_replacing_vacation_users {
+    {-user_id "" }
 } {
-    Returns the list of users that the current_user_id is replacing.
+    Returns the list of users that the current_user_id is replacing,
+    including himself.
 } {
     set current_user_id [ad_conn user_id]
+    if {"" ne $user_id} { set current_user_id $user_id }
 
     # Vacation Absence Logic:
     # Check if the current user is the vacation replacement for some other user
@@ -1042,9 +1045,9 @@ ad_proc -public im_workflow_replacing_vacation_users {
         "]]
     }
 
+    # Check if the current user is replacing users during their vacations
     if {[im_column_exists im_employees vacation_replacement_id]} {
-        # Get all the guys who have set vacation replacement to the current user
-	set replacement_ids [concat [db_list employee_replacement "
+	set replacement_ids [concat $replacement_ids [db_list employee_replacement "
 		select	e.employee_id
 		from	im_employees e
 		where	e.vacation_replacement_id = :current_user_id
@@ -1053,7 +1056,6 @@ ad_proc -public im_workflow_replacing_vacation_users {
 
     return $replacement_ids
 }
-
 
 
 ad_proc -public im_workflow_task_action {
