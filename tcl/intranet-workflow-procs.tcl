@@ -388,7 +388,7 @@ ad_proc -public im_workflow_graph_component {
 	set history_sql "
 	select	t.*,
 		tr.transition_name,
-		to_char(t.started_date, :date_format) as started_date_pretty,
+		to_char(coalesce(t.started_date, t.finished_date), :date_format) as started_date_pretty,
 		to_char(t.finished_date, :date_format) as finished_date_pretty,
 		im_name_from_user_id(t.holding_user) as holding_user_name
 	from
@@ -401,7 +401,7 @@ ad_proc -public im_workflow_graph_component {
 		and tr.transition_key = t.transition_key
 		and trigger_type = 'user'
 	order by t.enabled_date
-    "
+	"
 	set cnt 0
 	db_foreach history $history_sql {
 	    append history_html "
