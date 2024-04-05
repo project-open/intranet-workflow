@@ -1046,11 +1046,19 @@ ad_proc -public im_workflow_replacing_vacation_users {
     }
 
     # Check if the current user is replacing users during their vacations
+    # Fraber 2024-04-05: vacation_replacement_id on persons not im_employees, adding 2nd version below
     if {[im_column_exists im_employees vacation_replacement_id]} {
 	set replacement_ids [concat $replacement_ids [db_list employee_replacement "
 		select	e.employee_id
 		from	im_employees e
 		where	e.vacation_replacement_id = :current_user_id
+        "]]
+    }
+    if {[im_column_exists persons vacation_replacement_id]} {
+	set replacement_ids [concat $replacement_ids [db_list person_replacement "
+		select	pe.person_id
+		from	persons pe
+		where	pe.vacation_replacement_id = :current_user_id
         "]]
     }
 
@@ -1533,7 +1541,7 @@ ad_proc -public im_workflow_home_inbox_component {
         from    ($tasks_sql) t
         order by workflow_key || '.' || t.transition_key, workflow_name || ' - ' || transition_name
     "
-#    ad_return_complaint 1 [im_ad_hoc_query -format html $wf_action_sql]
+    # ad_return_complaint 1 [im_ad_hoc_query -format html $wf_action_sql]
     set wf_action_options [db_list_of_lists wfa $wf_action_sql]
     set wf_action_options [linsert $wf_action_options 0 [list "" ""]]
     set wf_action_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_wf_action $wf_action_options $filter_wf_action]
