@@ -1512,7 +1512,7 @@ ad_proc -public im_workflow_home_inbox_component {
     # ad_return_complaint 1 $wf_options_sql
 
     set workflow_options [db_list_of_lists wf $wf_options_sql]
-    set workflow_options [linsert $workflow_options 0 [list "" ""]]
+    set workflow_options [linsert $workflow_options 0 [list [_ intranet-core.All] ""]]
     set workflow_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_workflow_key $workflow_options $filter_workflow_key]
 
     # Options for the type of object
@@ -1529,7 +1529,7 @@ ad_proc -public im_workflow_home_inbox_component {
 		ot.pretty_name
     }
     set object_type_options [db_list_of_lists otypes $object_type_sql]
-    set object_type_options [linsert $object_type_options 0 [list "" ""]]
+    set object_type_options [linsert $object_type_options 0 [list [_ intranet-core.All] ""]]
     set object_type_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_object_type $object_type_options $filter_object_type]
 
 
@@ -1543,7 +1543,7 @@ ad_proc -public im_workflow_home_inbox_component {
     "
     # ad_return_complaint 1 [im_ad_hoc_query -format html $wf_action_sql]
     set wf_action_options [db_list_of_lists wfa $wf_action_sql]
-    set wf_action_options [linsert $wf_action_options 0 [list "" ""]]
+    set wf_action_options [linsert $wf_action_options 0 [list [_ intranet-core.All] ""]]
     set wf_action_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_wf_action $wf_action_options $filter_wf_action]
 
 
@@ -1560,7 +1560,7 @@ ad_proc -public im_workflow_home_inbox_component {
 		im_name_from_user_id(o.creation_user)
     }
     set owner_options [db_list_of_lists otypes $owner_sql]
-    set owner_options [linsert $owner_options 0 [list "" ""]]
+    set owner_options [linsert $owner_options 0 [list [_ intranet-core.All] ""]]
     set owner_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_owner_id $owner_options $filter_owner_id]
 
 
@@ -1583,7 +1583,7 @@ ad_proc -public im_workflow_home_inbox_component {
 		im_name_from_user_id(assignee_id)
     }
     set assignee_options [db_list_of_lists otypes $assignee_sql]
-    set assignee_options [linsert $assignee_options 0 [list "" ""]]
+    set assignee_options [linsert $assignee_options 0 [list [_ intranet-core.All] ""]]
     set assignee_select [im_select -translate_p 0 -ad_form_option_list_style_p 1 filter_assignee_id $assignee_options $filter_assignee_id]
 
 
