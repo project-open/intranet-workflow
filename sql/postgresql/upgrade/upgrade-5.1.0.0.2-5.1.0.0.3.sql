@@ -52,8 +52,8 @@ begin
 		return 0;
 	END IF;
 
-	-- No supervisor found, assign to custom_arg party_id (user or group)
-	RAISE NOTICE 'im_workflow__assign_to_supervisor(task_id=%, oid=%): No supervisor of object creator, assigning to party_id in custom_arg="%" ', p_task_id, v_object_id, p_custom_arg;
+	RAISE NOTICE 'im_workflow__assign_to_supervisor(task_id=%, oid=%): No supervisor found, assigning to custom_arg="%" ', 
+		p_task_id, v_object_id, p_custom_arg;
 
 	-- Cast to integer from parties.party_id. NULL argument gracefully handled or use global default
 	v_default_party_id := select party_id from parties where party_id::varchar = p_custom_arg;
@@ -71,9 +71,8 @@ begin
 		PERFORM workflow_case__add_task_assignment(p_task_id, v_default_party_id, 'f');
 		PERFORM workflow_case__notify_assignee (p_task_id, v_default_party_id, null, null, 
 			'wf_' || v_object_type || '_assignment_notif');
-
 		return 0;
 	END IF;
-
+	return 0;
 end;$$ language 'plpgsql';
 
