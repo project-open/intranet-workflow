@@ -56,8 +56,10 @@ begin
 		p_task_id, v_object_id, p_custom_arg;
 
 	-- Cast to integer from parties.party_id. NULL argument gracefully handled or use global default
-	v_default_party_id := select party_id from parties where party_id::varchar = p_custom_arg;
-	IF v_default_party_id is null THEN v_default_party_id := select group_id from groups where group_name = 'Senior Managers'; END IF;
+	select party_id into v_default_party_id from parties where party_id::varchar = p_custom_arg;
+	IF v_default_party_id is null THEN
+		select group_id into v_default_party_id from groups where group_name = 'Senior Managers';
+	END IF;
 
 	IF v_default_party_id is not null THEN
 		RAISE NOTICE 'im_workflow__assign_to_supervisor(task_id=%, oid=%): Assigning to party_id in custom_arg="%" ', p_task_id, v_object_id, p_custom_arg;
