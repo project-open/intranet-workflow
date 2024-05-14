@@ -1036,30 +1036,40 @@ ad_proc -public im_workflow_replacing_vacation_users {
         # Get all the guys on vacation who have specified
 	# that the current user (or one of it's groups)
 	# should be the vacation replacement.
-	set replacement_ids [concat $replacement_ids [db_list vacation_replacement "
+	set sql "
 		select	a.owner_id
 		from	im_user_absences a
 		where	a.vacation_replacement_id = :current_user_id and
 			a.start_date::date <= now()::date and
 			a.end_date::date >= now()::date
-        "]]
+        "
+	db_foreach absence_replacement $sql {
+	    if {"" ne $owner_id} { lappend replacement_ids $owner_id}
+	}
     }
 
     # Check if the current user is replacing users during their vacations
     # Fraber 2024-04-05: vacation_replacement_id on persons not im_employees, adding 2nd version below
     if {[im_column_exists im_employees vacation_replacement_id]} {
-	set replacement_ids [concat $replacement_ids [db_list employee_replacement "
+	set sql "
 		select	e.employee_id
 		from	im_employees e
 		where	e.vacation_replacement_id = :current_user_id
-        "]]
+        "
+	db_foreach employee_vacation_replacement $sql {
+	    if {"" ne $employee_id} { lappend replacement_ids $employee_id}
+	}
     }
+
     if {[im_column_exists persons vacation_replacement_id]} {
-	set replacement_ids [concat $replacement_ids [db_list person_replacement "
+	set sql "
 		select	pe.person_id
 		from	persons pe
 		where	pe.vacation_replacement_id = :current_user_id
-        "]]
+        "
+	db_foreach person_vacation_replacement $sql {
+	    if {"" ne $person_id} { lappend replacement_ids $person_id}
+	}
     }
 
     return $replacement_ids
