@@ -32,8 +32,11 @@ set bgcolor(0) " class=roweven"
 set bgcolor(1) " class=rowodd"
 
 set user_is_admin_p [im_is_user_site_wide_or_intranet_admin $current_user_id]
-if {!$user_is_admin_p} {
-    ad_return_complaint 1 "You are not an admin"
+set subsite_id [ad_conn subsite_id]
+set reassign_p [permission::permission_p -party_id $current_user_id -object_id $subsite_id -privilege "wf_reassign_tasks"]
+
+if {!$user_is_admin_p && !$reassign_p} {
+    ad_return_complaint 1 "You are not an admin or have the wf_reassgin_tasks privilege"
     ad_script_abort
 }
 
