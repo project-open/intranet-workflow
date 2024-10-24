@@ -96,6 +96,8 @@ ad_proc -public im_workflow_start_wf {
 	    im_workflow_skip_first_transition -case_id $case_id
 	}
     }
+    im_audit -object_id $object_id
+
     return $case_id
 }
 

@@ -90,6 +90,7 @@ switch $action {
 	ns_log Notice "reset-case-2: Copying case_id=$case_id"
 	# Start a new workflow case
 	set new_case_id [im_workflow_start_wf -object_id $object_id -workflow_key $workflow_key -skip_first_transition_p 1]
+	im_audit -object_id $object_id
     }
 
     "restart" {
