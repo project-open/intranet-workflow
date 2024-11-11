@@ -306,8 +306,8 @@ begin
 		p_task_id, v_object_id, p_custom_arg;
 
 	-- Cast to integer from parties.party_id. NULL argument gracefully handled or use global default
-	v_default_party_id := select party_id from parties where party_id::varchar = p_custom_arg;
-	IF v_default_party_id is null THEN v_default_party_id := select group_id from groups where group_name = 'Senior Managers'; END IF;
+	v_default_party_id := (select party_id from parties where party_id::varchar = p_custom_arg);
+	IF v_default_party_id is null THEN v_default_party_id := (select group_id from groups where group_name = 'Senior Managers'); END IF;
 
 	IF v_default_party_id is not null THEN
 		RAISE NOTICE 'im_workflow__assign_to_supervisor(task_id=%, oid=%): Assigning to party_id in custom_arg="%" ', p_task_id, v_object_id, p_custom_arg;
@@ -958,4 +958,72 @@ begin
 
 	return 0; 
 end;$$ language 'plpgsql';
+
+
+
+-- Unassigned callback for a financial document to assign a random senior manager who is not the project supervisor
+CREATE OR REPLACE FUNCTION im_workflow__assign_to_findoc_project_financial_supervisor(integer, text)
+RETURNS integer AS $BODY$
+DECLARE
+	p_task_id		alias for $1;
+	p_custom_arg		alias for $2;
+	v_transition_key	varchar;
+	v_object_type		varchar;
+	v_case_id		integer;
+	v_object_id		integer;
+	v_creation_user		integer;
+	v_creation_ip		varchar;
+	v_financial_supervisor_id 	integer;
+	v_financial_supervisor_name	varchar;
+	v_journal_id		integer;
+BEGIN
+	-- Get information about the transition and the 'environment'
+	select	tr.transition_key, t.case_id, c.object_id, o.creation_user, o.creation_ip, o.object_type
+	into	v_transition_key, v_case_id, v_object_id, v_creation_user, v_creation_ip, v_object_type
+	from	wf_tasks t, wf_cases c, wf_transitions tr, acs_objects o
+	where	t.task_id = p_task_id and
+		t.case_id = c.case_id and
+		o.object_id = t.case_id and
+		t.workflow_key = tr.workflow_key and
+		t.transition_key = tr.transition_key;
+
+	-- From the financial document get the task and from there get
+	-- the main_projects and extract its financial_supervisor_id
+	select	main_p.cosine_financial_supervisor_id, im_name_from_id(main_p.cosine_financial_supervisor_id)
+	into	v_financial_supervisor_id, v_financial_supervisor_name -- take the financial supervisor from the main project
+	from	im_costs c,
+		im_projects p,
+		im_projects main_p
+	where	c.cost_id = v_object_id and	-- the WF is attached to a financial document
+		c.project_id = p.project_id and	-- the cost is attached to a task
+		main_p.tree_sortkey = tree_root_key(p.tree_sortkey); -- Get the main_project from any sub-level
+
+	IF v_financial_supervisor_id is not null THEN
+		RAISE NOTICE 'The financial supervisor for % is % and called %', v_object_id, v_financial_supervisor_id, v_financial_supervisor_name;
+		v_journal_id := journal_entry__new(
+			null, v_case_id,
+			v_transition_key || ' assign_to_financial_supervisor ' || v_financial_supervisor_name,
+			v_transition_key || ' assign_to_financial_supervisor ' || v_financial_supervisor_name,
+			now(), v_creation_user, v_creation_ip,
+			'Assigning to user' || v_financial_supervisor_name || ', the financial supervisor of ' ||
+			acs_object__name(v_object_id) || '.'
+		);
+	ELSE	
+		RAISE NOTICE 'Missing financial supervisor for % - assigning to Senior Managers', v_object_id;
+		select group_id, group_name into v_financial_supervisor_id, v_financial_supervisor_name
+		from groups where group_name = 'Senior Managers';
+		v_journal_id := journal_entry__new(
+			null, v_case_id,
+			v_transition_key || ' assign_to_senior_managers ' || v_financial_supervisor_name,
+			v_transition_key || ' assign_to_senior_managers ' || v_financial_supervisor_name,
+			now(), v_creation_user, v_creation_ip,
+			'Assigning to Senior Managers, because there is no cosine_financial_supervisor_id for project ' ||
+			acs_object__name(v_object_id) || '.'
+		);
+	END IF;
+	PERFORM workflow_case__add_task_assignment(p_task_id, v_financial_supervisor_id, 'f');
+	PERFORM workflow_case__notify_assignee (p_task_id, v_financial_supervisor_id, null, null, 'wf_' || v_object_type || '_assignment_notif');
+
+	return 0;
+END; $BODY$ LANGUAGE 'plpgsql' VOLATILE;
 
