@@ -68,4 +68,4 @@ insert into wf_context_task_panels (context_key,workflow_key,transition_key,sort
 
 /** Static Assignments */
 insert into wf_context_assignments (context_key, workflow_key, role_key, party_id) 
-values ('default', 'bankholiday_approval_wf', 'approve', (select group_id from groups where group_name = 'HR Managers'));
+values ('default', 'bankholiday_approval_wf', 'approve', (select group_id from groups where group_name = 'Accounting'));
